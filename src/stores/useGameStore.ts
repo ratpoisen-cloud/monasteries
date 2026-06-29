@@ -655,7 +655,7 @@ export const useGameStore = create<GameState>((set, get) => ({
               return { ...c, occupantId: activePlayerId };
             }
             if (c.x === curX && c.y === curY) {
-              return { ...c, type: 'windfall', ownerId: null, occupantId: null };
+              return { ...c, type: 'windfall' as CellType, ownerId: null, occupantId: null };
             }
             return c;
           })
@@ -667,7 +667,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             ...players,
             [activePlayerId]: { ...active, resources: newResources, hasEntered: false, prevCell: null },
           },
-          gameLog: [...gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}) и отступил назад.${resourceLog}`],
+          gameLog: [...get().gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}) и отступил назад.${resourceLog}`],
           activeEventCard: null,
           discardDeck: [...discardDeck, activeEventCard],
         });
@@ -691,7 +691,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           ...players,
           [activePlayerId]: { ...active, resources: newResources },
         },
-        gameLog: [...gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}).${resourceLog}`],
+        gameLog: [...get().gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}).${resourceLog}`],
         activeEventCard: null,
         discardDeck: [...discardDeck, activeEventCard],
         phase: 'BUILD',

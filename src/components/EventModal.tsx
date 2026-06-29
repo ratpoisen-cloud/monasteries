@@ -1,6 +1,6 @@
 import React from 'react';
 import type { LetopisCard, Player } from '../types/game';
-import { Scroll, Skull, Coins, Wheat, Check } from 'lucide-react';
+import { Scroll, Coins, Wheat, Check } from 'lucide-react';
 import { Dice } from './Dice';
 
 interface EventModalProps {

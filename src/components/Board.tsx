@@ -1,7 +1,6 @@
 import React from 'react';
 import type { Cell as CellType, Player } from '../types/game';
 import { Cell } from './Cell';
-import { Tooltip } from './Tooltip';
 
 interface BoardProps {
   board: CellType[][];

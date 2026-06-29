@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import type { Player } from '../types/game';
 import { ShoppingCart, RefreshCw, X } from 'lucide-react';
-import { Tooltip } from './Tooltip';
 
 interface TradeModalProps {
   player: Player;
@@ -182,9 +181,9 @@ export const TradeModal: React.FC<TradeModalProps> = ({
         {/* Confirm Button */}
         <button
           onClick={handleConfirm}
-          disabled={netSilverBalance < 0}
+          disabled={netSilver < 0}
           className={`w-full py-3 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition-all ${
-            netSilverBalance >= 0
+            netSilver >= 0
               ? 'btn-red-gold cursor-pointer text-oldrus tracking-wider'
               : 'bg-stone-300 text-stone-500 border border-stone-400 cursor-not-allowed'
           }`}
