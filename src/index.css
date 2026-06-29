@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Pattaya&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Ruslan+Display&display=swap');
+@import "tailwindcss";
+
+:root {
+  --font-pattaya: 'Pattaya', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+}
+
+body {
+  font-family: 'Playfair Display', serif;
+  background-color: #050404;
+  background-image: radial-gradient(circle, #120e0d 0%, #020101 100%);
+  color: #eae5d9;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #ecdcb7;
+}
+::-webkit-scrollbar-thumb {
+  background: #3f5a2a;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2b3e1c;
+}
+
+/* Parchment scroll styling */
+.parchment-bg {
+  background: radial-gradient(circle, #fdfbf7 0%, #eadaa7 100%);
+  border: 4px double #8b6508;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 0 50px rgba(139, 101, 8, 0.25);
+  color: #3d2508;
+}
+
+/* Chronicle Scroll effect */
+.chronicle-scroll {
+  background: linear-gradient(to bottom, #fdfbf7 5%, #eadaa7 15%, #f4e7be 85%, #dcbfa2 95%);
+  border-left: 3px solid #8b6508;
+  border-right: 3px solid #8b6508;
+  box-shadow: 
+    0 10px 25px rgba(0,0,0,0.35),
+    inset 0 12px 15px -10px rgba(90, 50, 10, 0.5), 
+    inset 0 -12px 15px -10px rgba(90, 50, 10, 0.5);
+  color: #3d2508;
+  position: relative;
+}
+
+/* Decorative wood frames with green accents */
+.wood-panel {
+  background-image: linear-gradient(135deg, #1b2613 0%, #0d1309 100%);
+  border: 3px solid #3f5a2a;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+
+.gold-glow {
+  box-shadow: 0 0 15px rgba(254, 240, 138, 0.6);
+}
+
+.text-oldrus {
+  font-family: 'Ruslan Display', serif;
+}
+
+/* Red-gold primary buttons matching StartScreen */
+.btn-red-gold {
+  background-color: #b91c1c;
+  color: #fef08a;
+  border: 1px solid rgba(254, 240, 138, 0.3);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease-in-out;
+}
+.btn-red-gold:hover:not(:disabled) {
+  background-color: #991b1b;
+  transform: scale(1.02);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
+}
+.btn-red-gold:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.btn-red-gold:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Green-gold secondary buttons for actions */
+.btn-green-gold {
+  background-color: #2b3e1c;
+  color: #fef08a;
+  border: 1px solid rgba(254, 240, 138, 0.2);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease-in-out;
+}
+.btn-green-gold:hover:not(:disabled) {
+  background-color: #1c2b12;
+  transform: scale(1.01);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.4);
+}
+.btn-green-gold:active:not(:disabled) {
+  transform: scale(0.99);
+}
+.btn-green-gold:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Tooltip base styles (used with Tooltip React component) */
+.tooltip-body {
+  @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg
+         bg-stone-950/95 text-stone-100 text-xs whitespace-nowrap
+         shadow-xl border border-stone-700 pointer-events-none z-50;
+  max-width: 16rem;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.3;
+}
+
+/* Active monk gentle vertical drift animation */
+@keyframes drift {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.animate-drift {
+  animation: drift 2.5s ease-in-out infinite;
+}
