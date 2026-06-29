@@ -165,7 +165,7 @@ function App() {
           <h1 
             className="text-7xl md:text-9xl text-[#b91c1c] drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)]"
             style={{ 
-              fontFamily: "'Ruslan Display', serif", 
+              fontFamily: "'Monomakh Unicode', serif", 
               textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' 
             }}
           >
@@ -208,7 +208,7 @@ function App() {
             <button 
               onClick={handleStart}
               className="px-10 py-4 bg-[#b91c1c] text-[#fef08a] text-2xl font-bold rounded shadow-[0_4px_14px_0_rgba(0,0,0,0.7)] hover:bg-red-800 transition-all uppercase tracking-widest border border-[#fef08a]/30 cursor-pointer hover:scale-105 active:scale-95 text-oldrus"
-              style={{ fontFamily: "'Ruslan Display', serif" }}
+              style={{ fontFamily: "'Monomakh Unicode', serif" }}
             >
               Войти в игру
             </button>

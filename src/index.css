@@ -1,13 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=Pattaya&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Ruslan+Display&display=swap');
+@font-face {
+  font-family: 'EvangelieTT';
+  src: url('./assets/fonts/ofont.ru_EvangelieTT.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Monomakh Unicode';
+  src: url('./assets/fonts/ofont.ru_Monomakh Unicode.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Izvod';
+  src: url('./assets/fonts/ofont.ru_Izvod.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @import "tailwindcss";
 
 :root {
-  --font-pattaya: 'Pattaya', sans-serif;
-  --font-serif: 'Playfair Display', serif;
+  --font-evangelie: 'EvangelieTT', serif;
+  --font-monomakh: 'Monomakh Unicode', serif;
+  --font-izvod: 'Izvod', serif;
 }
 
 body {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Izvod', serif;
   background-color: #050404;
   background-image: radial-gradient(circle, #120e0d 0%, #020101 100%);
   color: #eae5d9;
@@ -64,7 +88,15 @@ body {
 }
 
 .text-oldrus {
-  font-family: 'Ruslan Display', serif;
+  font-family: 'Monomakh Unicode', serif;
+}
+
+.text-evangelie {
+  font-family: 'EvangelieTT', serif;
+}
+
+.text-izvod {
+  font-family: 'Izvod', serif;
 }
 
 /* Red-gold primary buttons matching StartScreen */

@@ -47,12 +47,12 @@ export const EventModal: React.FC<EventModalProps> = ({
         </h2>
 
         {card.quote && (
-          <p className="text-md italic text-amber-800 text-oldrus font-semibold leading-relaxed border-y border-amber-900/10 py-3 w-full">
+          <p className="text-md italic text-amber-800 text-evangelie font-semibold leading-relaxed border-y border-amber-900/10 py-3 w-full">
             {card.quote}
           </p>
         )}
 
-        <p className="text-sm font-semibold leading-relaxed text-amber-950 px-4">
+        <p className="text-sm font-semibold leading-relaxed text-amber-950 px-4 text-izvod">
           {card.description}
         </p>
 
