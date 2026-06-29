@@ -173,8 +173,7 @@ function App() {
           </h1>
           
           <h2 
-            className="mt-2 text-xl md:text-3xl text-[#fef08a] uppercase tracking-[0.3em] font-medium drop-shadow-[0_3px_3px_rgba(0,0,0,0.9)]"
-            style={{ fontFamily: "sans-serif" }}
+            className="mt-2 text-xl md:text-3xl text-[#fef08a] uppercase tracking-[0.3em] font-medium drop-shadow-[0_3px_3px_rgba(0,0,0,0.9)] text-oldrus"
           >
             Настольная игра
           </h2>
