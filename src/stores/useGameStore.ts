@@ -18,7 +18,6 @@ interface GameState {
   hasBuiltThisTurn: boolean;
   
   // Custom dialogs & UI states
-  showBribeDialog: boolean;
   showTradeDialog: boolean;
   showMonkRecruitDialog: boolean;
   showFortressDialog: boolean;
@@ -37,7 +36,15 @@ interface GameState {
   visitCityLocation: (location: 'prince' | 'bishop' | 'artel' | 'fair') => void;
   skipLocationAction: () => void;
   recruitMonkAttempt: () => void;
-  tradeResources: (buy: { bread?: number; wax?: number }, sellSaltCount: number) => void;
+  tradeResources: (ops: {
+    buyBread?: number;
+    buyWax?: number;
+    sellSalt?: number;
+    sellBread?: number;
+    sellWax?: number;
+    exchangeSaltToBread?: number;
+    exchangeSaltToWax?: number;
+  }) => void;
   hireWarriorAtFortress: () => void;
   skipFortressAction: () => void;
   performCellResourceAction: (cellType: 'village' | 'saltworks') => void;
@@ -75,7 +82,6 @@ export const useGameStore = create<GameState>((set, get) => ({
   discardDeck: [],
   activeEventCard: null,
   hasBuiltThisTurn: false,
-  showBribeDialog: false,
   showTradeDialog: false,
   showMonkRecruitDialog: false,
   showFortressDialog: false,
@@ -163,7 +169,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       discardDeck: [],
       activeEventCard: null,
       hasBuiltThisTurn: false,
-      showBribeDialog: false,
       showTradeDialog: false,
       showMonkRecruitDialog: false,
       showFortressDialog: false,
@@ -325,13 +330,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       })
     );
 
-    // Update hasEntered in player list (clear riverBlocked on auto-pass)
+    // Update hasEntered in player list (clear riverBlocked on auto-pass, store prevCell)
     const updatedPlayers = {
       ...players,
       [activePlayerId]: {
         ...activePlayer,
         hasEntered: true,
         riverBlocked: currentCell?.type === 'river' && activePlayer.riverBlocked ? false : activePlayer.riverBlocked,
+        prevCell: hasEntered && currentCell ? { x: currentCell.x, y: currentCell.y } : null,
       },
     };
 
@@ -408,16 +414,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     let discard = [...discardDeck];
 
     if (deck.length === 0) {
-      if (discard.length === 0) {
-        // End of game trigger
-        set((state) => ({
-          phase: 'GAME_OVER',
-          gameLog: [...state.gameLog, `Колода Летописи пуста! Время подсчитывать победные очки!`],
-        }));
-        return;
-      }
-      deck = [...discard].sort(() => Math.random() - 0.5);
-      discard = [];
+      // End of game trigger
+      set((state) => ({
+        phase: 'GAME_OVER',
+        gameLog: [...state.gameLog, `Колода Летописи пуста! Время подсчитывать победные очки!`],
+      }));
+      return;
     }
 
     const card = deck.shift()!;
@@ -427,23 +429,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       activeEventCard: card,
     });
 
-    // Check if card has immediate roll or requirements
+    // Log the event — roll/bribe/helper choice handled in EventModal
     if (card.actionType === 'monk_death_check') {
-      if (card.actionPayload.threat === 'bandits') {
-        // Option to bribe exists
-        set({ showBribeDialog: true });
-      } else {
-        // Check if player has helpers
-        const activePlayer = get().players[get().activePlayerId];
-        if (activePlayer.helpers.warrior || activePlayer.helpers.bear) {
-          // Resolve dialog for helper sacrifice will show in UI
-        } else {
-          // Straight to roll
-          set((state) => ({
-            gameLog: [...state.gameLog, `Запущено испытание: ${card.title}. Необходим бросок кубика!`],
-          }));
-        }
-      }
+      set((state) => ({
+        gameLog: [...state.gameLog, `Запущено испытание: ${card.title}. Бросьте кубик!`],
+      }));
     }
   },
 
@@ -452,72 +442,34 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!activeEventCard) return;
 
     const p = players[activePlayerId];
-    let bribePaid = false;
+    const bribeOptions = activeEventCard.actionPayload?.bribeOptions as Record<string, number> | undefined;
+    const cost = bribeOptions?.[method];
+    if (!cost || (p.resources as any)[method] < cost) return;
 
-    if (method === 'silver' && p.resources.silver >= 1) {
-      set((state) => {
-        const active = state.players[activePlayerId];
-        return {
-          players: {
-            ...state.players,
-            [activePlayerId]: {
-              ...active,
-              resources: { ...active.resources, silver: active.resources.silver - 1 },
-            },
-          },
-          gameLog: [...state.gameLog, `${active.name} откупился от разбойников 1 ед. Серебра.`],
-          showBribeDialog: false,
-          activeEventCard: null,
-          discardDeck: [...state.discardDeck, activeEventCard],
-          phase: 'BUILD',
-        };
-      });
-      bribePaid = true;
-    } else if (method === 'bread' && p.resources.bread >= 2) {
-      set((state) => {
-        const active = state.players[activePlayerId];
-        return {
-          players: {
-            ...state.players,
-            [activePlayerId]: {
-              ...active,
-              resources: { ...active.resources, bread: active.resources.bread - 2 },
-            },
-          },
-          gameLog: [...state.gameLog, `${active.name} откупился от разбойников 2 ед. Хлеба.`],
-          showBribeDialog: false,
-          activeEventCard: null,
-          discardDeck: [...state.discardDeck, activeEventCard],
-          phase: 'BUILD',
-        };
-      });
-      bribePaid = true;
-    }
+    const resourceLabels: Record<string, string> = {
+      silver: 'Серебра',
+      bread: 'Хлеба',
+      wax: 'Воска',
+    };
 
-    if (!bribePaid) {
-      // Must roll dice
-      set({ showBribeDialog: false });
-      set((state) => ({
-        gameLog: [...state.gameLog, `Вы отказались платить выкуп или не хватает припасов. Бросаем кубик!`],
-      }));
-      get().rollDice((roll) => {
-        if (roll % 2 === 0) {
-          set((state) => ({
-            gameLog: [...state.gameLog, `Четное число (${roll})! Монах ловко скрылся в лесу.`],
-            activeEventCard: null,
-            discardDeck: [...state.discardDeck, activeEventCard],
-            phase: 'BUILD',
-          }));
-        } else {
-          const player = get().players[activePlayerId];
-          if (player.helpers.warrior || player.helpers.bear) {
-            // Wait for user action on helper sacrifice
-          } else {
-            get().resolveEventWithHelper('none');
-          }
-        }
-      });
-    }
+    set((state) => {
+      const active = state.players[activePlayerId];
+      const newResources = { ...active.resources };
+      (newResources as any)[method] -= cost;
+      return {
+        players: {
+          ...state.players,
+          [activePlayerId]: {
+            ...active,
+            resources: newResources,
+          },
+        },
+        gameLog: [...state.gameLog, `${active.name} откупился ${cost} ед. ${resourceLabels[method] ?? method}.`],
+        activeEventCard: null,
+        discardDeck: [...state.discardDeck, activeEventCard],
+        phase: 'BUILD',
+      };
+    });
   },
 
   resolveEventWithHelper: (helper) => {
@@ -550,7 +502,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       // No helper used -> Monk dies!
       set((state) => {
         const active = state.players[activePlayerId];
-        const newMonksCount = Math.max(1, active.monksCount - 1);
+        const newMonksCount = Math.max(0, active.monksCount - 1);
         const zhitieGain = active.victoryCards.zhitie + 1;
         
         const updatedBoard = state.board.map((row) =>
@@ -690,6 +642,35 @@ export const useGameStore = create<GameState>((set, get) => ({
           type === 'fortress' ? 'Крепость' :
           type === 'river' ? 'Река' :
           'Бурелом';
+
+        // Windfall: retreat player to previous cell
+        if (type === 'windfall') {
+          const prevCell = active.prevCell;
+          const boardWithRetreat = updatedBoard.map((row) =>
+            row.map((c) => {
+              if (prevCell && c.x === prevCell.x && c.y === prevCell.y) {
+                return { ...c, occupantId: activePlayerId };
+              }
+              // Remove occupant from the windfall cell
+              if (c.x === curX && c.y === curY) {
+                return { ...c, occupantId: null };
+              }
+              return c;
+            })
+          );
+          return {
+            board: boardWithRetreat,
+            players: {
+              ...state.players,
+              [activePlayerId]: { ...active, resources: newResources, hasEntered: false, prevCell: null },
+            },
+            gameLog: [...state.gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}) и отступил назад.${resourceLog}`],
+            activeEventCard: null,
+            discardDeck: [...state.discardDeck, activeEventCard],
+            phase: 'BUILD',
+          };
+        }
+
         return {
           board: updatedBoard,
           players: {
@@ -896,10 +877,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         valid = true;
       }
     } else if (structure === 'belfry') {
-      // 4 Молвы + 3 Монаха (or 3/4 monks as rules say 4, but let's limit check to monksCount >= 3 as max) + 4 Хлеба + Артель
+      // 4 Молвы + 3 Монаха + 4 Хлеба + Артель
       if (res.molva >= 4 && p.monksCount >= 3 && res.bread >= 4 && p.tokens.artel) {
         newResources.molva -= 4;
         newResources.bread -= 4;
+        newTokens.artel = false;
         valid = true;
       }
     } else if (structure === 'cathedral') {
@@ -908,6 +890,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         newResources.molva -= 5;
         newResources.bread -= 5;
         newResources.wax -= 2;
+        newTokens.artel = false;
         newTokens.blessing = false;
         valid = true;
       }
@@ -1021,6 +1004,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       });
     } else if (location === 'bishop') {
       // 4 Молвы -> Blessing token
+      if (p.tokens.blessing) {
+        set((state) => ({
+          gameLog: [...state.gameLog, `У вас уже есть благословение. Используйте его, прежде чем просить новое.`],
+        }));
+        return;
+      }
       if (res.molva < 4) {
         set((state) => ({
           gameLog: [...state.gameLog, `Епископ требует 4 ед. Молвы за благословение!`],
@@ -1159,7 +1148,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     }));
   },
 
-  tradeResources: (buy, sellSaltCount) => {
+  tradeResources: (ops) => {
     const { activePlayerId, players } = get();
     const p = players[activePlayerId];
     const res = p.resources;
@@ -1169,26 +1158,61 @@ export const useGameStore = create<GameState>((set, get) => ({
     let newWax = res.wax;
     let newSalt = res.salt;
 
-    // 1. Sell salt: 1 salt = 1 silver
-    if (sellSaltCount > 0 && res.salt >= sellSaltCount) {
-      newSalt -= sellSaltCount;
-      newSilver += sellSaltCount;
+    // 1. Sell salt to silver: 1 salt = 1 silver
+    const sellS = ops.sellSalt ?? 0;
+    if (sellS > 0 && newSalt >= sellS) {
+      newSalt -= sellS;
+      newSilver += sellS;
     }
 
-    // 2. Buy Bread: 1 silver = 3 bread
-    const breadCost = buy.bread ? Math.ceil(buy.bread / 3) : 0;
-    const breadToGet = buy.bread || 0;
-    if (breadCost > 0 && newSilver >= breadCost) {
-      newSilver -= breadCost;
-      newBread += breadToGet;
+    // 2. Sell bread to silver: 3 bread = 1 silver
+    const sellB = ops.sellBread ?? 0;
+    if (sellB > 0 && newBread >= sellB) {
+      const silverGain = Math.floor(sellB / 3);
+      newBread -= sellB;
+      newSilver += silverGain;
     }
 
-    // 3. Buy Wax: 1 silver = 2 wax
-    const waxCost = buy.wax ? Math.ceil(buy.wax / 2) : 0;
-    const waxToGet = buy.wax || 0;
-    if (waxCost > 0 && newSilver >= waxCost) {
-      newSilver -= waxCost;
-      newWax += waxToGet;
+    // 3. Sell wax to silver: 2 wax = 1 silver
+    const sellW = ops.sellWax ?? 0;
+    if (sellW > 0 && newWax >= sellW) {
+      const silverGain = Math.floor(sellW / 2);
+      newWax -= sellW;
+      newSilver += silverGain;
+    }
+
+    // 4. Buy bread with silver: 1 silver = 3 bread
+    const buyB = ops.buyBread ?? 0;
+    if (buyB > 0) {
+      const cost = Math.ceil(buyB / 3);
+      if (newSilver >= cost) {
+        newSilver -= cost;
+        newBread += buyB;
+      }
+    }
+
+    // 5. Buy wax with silver: 1 silver = 2 wax
+    const buyW = ops.buyWax ?? 0;
+    if (buyW > 0) {
+      const cost = Math.ceil(buyW / 2);
+      if (newSilver >= cost) {
+        newSilver -= cost;
+        newWax += buyW;
+      }
+    }
+
+    // 6. Exchange salt → bread: 1 salt = 3 bread
+    const saltToB = ops.exchangeSaltToBread ?? 0;
+    if (saltToB > 0 && newSalt >= saltToB) {
+      newSalt -= saltToB;
+      newBread += saltToB * 3;
+    }
+
+    // 7. Exchange salt → wax: 1 salt = 2 wax
+    const saltToW = ops.exchangeSaltToWax ?? 0;
+    if (saltToW > 0 && newSalt >= saltToW) {
+      newSalt -= saltToW;
+      newWax += saltToW * 2;
     }
 
     set((state) => ({

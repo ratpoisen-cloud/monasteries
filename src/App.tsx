@@ -20,7 +20,6 @@ function App() {
     diceRolling,
     gameLog,
     activeEventCard,
-    showBribeDialog,
     showTradeDialog,
     showFortressDialog,
     showDestructionDialog,
@@ -269,7 +268,6 @@ function App() {
         player={activePlayer}
         diceRollResult={diceRollResult}
         diceRolling={diceRolling}
-        showBribeDialog={showBribeDialog}
         onBribe={resolveEventWithBribe}
         onUseHelper={resolveEventWithHelper}
         onRollDice={() => rollDice()}

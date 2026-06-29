@@ -9,7 +9,6 @@ export type CellType =
   | 'village'
   | 'saltworks'
   | 'river'
-  | 'forest'
   | 'fortress'
   | 'chapel'
   | 'windfall'; // Бурелом (непроходимый)
@@ -56,6 +55,7 @@ export interface Player {
   startCell: { x: number; y: number };
   hasEntered?: boolean;
   riverBlocked?: boolean; // true если прошлый бросок на реке был неудачным
+  prevCell?: { x: number; y: number } | null;
 }
 
 export interface Cell {

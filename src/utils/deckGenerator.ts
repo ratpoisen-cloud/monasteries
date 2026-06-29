@@ -104,7 +104,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
     quote: '«Придоша бо погании степные люди...»',
     description: 'Свирепые степняки рыщут по округе. Бросьте кубик: ЧЕТ — вы спаслись, НЕЧЕТ — монах погибает. Дружинник или Медведь защитят вас автоматически (помощник при этом теряется).',
     actionType: 'monk_death_check',
-    actionPayload: { threat: 'nomads' },
+    actionPayload: { threat: 'nomads', bribeOptions: { silver: 1, bread: 1 } },
     requiresDiceRoll: true,
   },
   {
@@ -112,7 +112,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
     quote: '«И поклоняхуся бесом во кумирех лесных...»',
     description: 'Монах забрел в капище лесных язычников. Бросьте кубик: ЧЕТ — вы смогли убедить их словом, НЕЧЕТ — монах принесен в жертву. Дружинник или Медведь спасут вас автоматом (теряя помощника).',
     actionType: 'monk_death_check',
-    actionPayload: { threat: 'pagans' },
+    actionPayload: { threat: 'pagans', bribeOptions: { bread: 1, wax: 1 } },
     requiresDiceRoll: true,
   },
   {

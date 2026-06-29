@@ -240,7 +240,7 @@ export const MonasteryPanel: React.FC<MonasteryPanelProps> = ({
                 <span className="pointer-events-none">Благословение {p.tokens.blessing ? 'активно' : 'нет'}</span>
               </div>
             </Tooltip>
-            <Tooltip text="Артель мастеров — требуется для Звонницы и Собора. Жетон НЕ сжигается после постройки.\nПолучение: наймите за 1 Серебро в Артели плотников." multiline>
+            <Tooltip text="Артель мастеров — требуется для Звонницы и Собора. Сгорает после постройки, нужно нанимать заново.\nПолучение: наймите за 1 Серебро в Артели плотников." multiline>
               <div className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 ${
                 p.tokens.artel
                   ? 'bg-orange-50 text-orange-900 border-orange-250 shadow-sm font-semibold'
