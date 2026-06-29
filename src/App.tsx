@@ -5,7 +5,7 @@ import { Board } from './components/Board';
 import { MonasteryPanel } from './components/MonasteryPanel';
 import { EventModal } from './components/EventModal';
 import { TradeModal } from './components/TradeModal';
-import { Scroll, Award, RotateCcw, Flame, Loader2 } from 'lucide-react';
+import { Scroll, Award, RotateCcw, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 function App() {
@@ -93,7 +93,8 @@ function App() {
 
     Object.values(players).forEach((p) => {
       const buildingsCount = Object.values(p.buildings).filter(Boolean).length;
-      const pts = buildingsCount + p.victoryCards.obraz + p.victoryCards.zhitie;
+      const relicCount = Object.values(p.relics).filter(Boolean).length;
+      const pts = buildingsCount + relicCount;
       if (pts > maxPts) {
         maxPts = pts;
         winnerName = p.name;
@@ -122,20 +123,25 @@ function App() {
   if (loading) {
     return (
       <div
-        className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-cover bg-center transition-all duration-1000"
-        style={{ backgroundImage: "linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.85)), url('/edited-image.jpg')" }}
+        className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-cover bg-center transition-all duration-1000 select-none"
+        style={{ backgroundImage: "linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.9)), url('/edited-image.jpg')" }}
       >
-        <div className="parchment-bg max-w-md w-full rounded-3xl p-10 flex flex-col gap-6 shadow-2xl relative items-center justify-center border-4 double border-amber-900">
-          <div className="absolute top-2 left-2 right-2 bottom-2 border border-amber-900/10 pointer-events-none rounded-2xl" />
-          <div className="relative">
-            <Flame className="w-12 h-12 text-orange-500 animate-pulse" />
-            <Loader2 className="w-16 h-16 text-amber-900/40 absolute -top-2 -left-2 animate-spin" />
+        <div className="parchment-codex max-w-md w-full p-10 sm:p-12 flex flex-col gap-6 shadow-2xl relative items-center justify-center border-4 double border-amber-900/80 rounded-3xl animate-scale-in">
+          <div className="absolute top-3 left-3 right-3 bottom-3 border border-amber-900/20 pointer-events-none rounded-2xl" />
+          
+          {/* Illuminated Loading Graphic */}
+          <div className="relative flex items-center justify-center w-24 h-24 my-2">
+            <Loader2 className="w-24 h-24 text-amber-700/50 absolute inset-0 animate-spin" />
+            <div className="w-16 h-16 rounded-full bg-amber-900/10 border border-amber-600/40 p-2 flex items-center justify-center shadow-inner gold-glow">
+              <Scroll className="w-8 h-8 text-amber-950 animate-pulse" />
+            </div>
           </div>
-          <h2 className="text-3xl text-amber-950 text-oldrus font-bold mt-2">
+
+          <h2 className="text-3xl text-amber-950 text-oldrus font-bold tracking-wide drop-shadow-sm">
             Пишется летопись обителей...
           </h2>
-          <p className="text-sm text-amber-900 italic font-semibold">
-            Пожалуйста, подождите, пока монахи приготовят пергамент и чернила
+          <p className="text-base text-amber-900/90 italic font-medium leading-relaxed">
+            Пожалуйста, подождите, пока монахи приготовят пергамент и чернила для великого дела.
           </p>
         </div>
       </div>
@@ -163,10 +169,11 @@ function App() {
         {/* Title Container */}
         <div className="relative z-10 text-center flex flex-col items-center animate-scale-in">
           <h1 
-            className="text-7xl md:text-9xl text-[#b91c1c] drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)]"
+            className="text-7xl md:text-9xl text-[#701a1a] drop-shadow-[0_8px_16px_rgba(0,0,0,0.95)] tracking-wide"
             style={{ 
               fontFamily: "'Monomakh Unicode', serif", 
-              textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' 
+              WebkitTextStroke: '1px rgba(254, 240, 138, 0.5)',
+              textShadow: '3px 3px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 0 25px rgba(254, 240, 138, 0.75), 0 0 45px rgba(212, 175, 55, 0.5)' 
             }}
           >
             Монастыри
@@ -180,7 +187,7 @@ function App() {
         </div>
 
         {/* Player Selection Box */}
-        <div className="relative z-10 mt-12 bg-black/45 backdrop-blur-md p-6 rounded-2xl border border-white/10 text-center flex flex-col items-center max-w-sm w-full shadow-2xl animate-fade-in">
+        <div className="relative z-10 mt-12 text-center flex flex-col items-center max-w-sm w-full animate-fade-in">
           <label className="text-sm font-bold text-[#fef08a] uppercase tracking-wider mb-3 drop-shadow-[0_2px_2px_rgba(0,0,0,0.9)]">
             Количество участников:
           </label>
@@ -191,7 +198,7 @@ function App() {
                 onClick={() => setPlayerCount(n)}
                 className={`w-12 h-12 rounded-xl text-lg font-bold border transition-all cursor-pointer ${
                   playerCount === n
-                    ? 'bg-[#b91c1c] text-[#fef08a] border-[#fef08a] shadow-lg scale-105'
+                    ? 'bg-[#701a1a] text-[#fef08a] border-[#fef08a] shadow-lg scale-105'
                     : 'bg-black/40 text-[#fef08a]/60 border-[#fef08a]/20 hover:bg-black/70 hover:text-[#fef08a]'
                 }`}
               >
@@ -203,15 +210,13 @@ function App() {
 
         {/* Start Game Button */}
         <div className="relative z-10 mt-auto mb-20 animate-fade-in">
-          <Tooltip text="Начать игру. Каждый игрок получает 1 Молву, 1 Серебро и 1 Хлеб." multiline>
-            <button 
-              onClick={handleStart}
-              className="px-10 py-4 bg-[#b91c1c] text-[#fef08a] text-2xl font-bold rounded shadow-[0_4px_14px_0_rgba(0,0,0,0.7)] hover:bg-red-800 transition-all uppercase tracking-widest border border-[#fef08a]/30 cursor-pointer hover:scale-105 active:scale-95 text-oldrus"
-              style={{ fontFamily: "'Monomakh Unicode', serif" }}
-            >
-              Войти в игру
-            </button>
-          </Tooltip>
+          <button 
+            onClick={handleStart}
+            className="px-10 py-4 bg-gradient-to-b from-[#801818] to-[#541212] text-[#fef08a] text-2xl font-bold rounded shadow-[0_6px_20px_rgba(0,0,0,0.8)] hover:from-[#941c1c] hover:to-[#661616] transition-all uppercase tracking-widest border border-[#fef08a]/40 cursor-pointer hover:scale-105 active:scale-95 text-oldrus"
+            style={{ fontFamily: "'Monomakh Unicode', serif" }}
+          >
+            Войти в игру
+          </button>
         </div>
       </div>
     );
@@ -320,13 +325,19 @@ function App() {
             <div className="flex flex-col gap-2 w-full">
               {buildOrder.map((key) => {
                 if (!activePlayer.buildings[key]) return null;
+                const relic = activePlayer.relics[key];
                 return (
                   <button
                     key={key}
                     onClick={() => destroyBuilding(key)}
-                    className="w-full py-3 btn-red-gold rounded-xl font-bold text-sm transition-all cursor-pointer text-oldrus tracking-wider"
+                    className="w-full py-3 btn-red-gold rounded-xl font-bold text-sm transition-all cursor-pointer text-oldrus tracking-wider flex items-center justify-center gap-2"
                   >
-                    {buildingNames[key]}
+                    <span>{buildingNames[key]}</span>
+                    {relic && (
+                      <span className="text-xs bg-red-950/40 px-2 py-0.5 rounded-full border border-red-700/50">
+                        {relic === 'obraz' ? 'Образ' : 'Житие'} 🔥
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -335,37 +346,142 @@ function App() {
         </div>
       )}
 
-      {/* Header */}
-      <header className="w-full max-w-[1200px] flex justify-between items-center bg-stone-950/50 border border-stone-850 p-4 rounded-2xl mb-6 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl font-bold text-amber-300 text-oldrus tracking-wide">
-            Монастыри
+      {/* Top Floating Glass HUD */}
+      <header className="w-full max-w-[1300px] flex justify-between items-center hud-card p-4 sm:p-5 mb-8 shadow-2xl">
+        <div className="flex items-center gap-4">
+          <span className="text-3xl sm:text-4xl font-bold text-amber-300 text-oldrus tracking-widest drop-shadow-lg">
+            ⚜️ Монастыри
           </span>
-          <span className="text-xs text-stone-500 font-mono">
-            Ход {turnNumber}
+          <span className="text-xs text-amber-200/70 font-mono bg-amber-950/60 px-3.5 py-1.5 rounded-full border border-amber-500/30 shadow-inner">
+            Летопись: Ход {turnNumber}
           </span>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-sm text-stone-400">Активный ход:</span>
+          <span className="text-sm text-stone-300 font-medium tracking-wide">Ход игрока:</span>
           <span
-            className="font-bold text-oldrus flex items-center gap-1.5 px-3 py-1 rounded-lg border border-amber-900/10 bg-amber-950/10"
+            className="font-bold text-oldrus flex items-center gap-2.5 px-4 py-2 rounded-2xl border border-amber-400/40 bg-amber-950/80 shadow-lg hud-card-active"
             style={{ color: activePlayer.color }}
           >
             <span
-              className="w-2.5 h-2.5 rounded-full inline-block"
+              className="w-3.5 h-3.5 rounded-full inline-block shadow-md ring-2 ring-white/30"
               style={{ backgroundColor: activePlayer.color }}
             />
-            {activePlayer.name}
+            <span className="text-xl">{activePlayer.name}</span>
           </span>
         </div>
       </header>
 
-      {/* Main grid / content layout */}
-      <div className="w-full max-w-[1200px] flex flex-col lg:flex-row gap-6 items-start justify-center">
-        {/* Game Board */}
-        <div className="flex-1 flex flex-col items-center gap-3 w-full">
-          <div className="bg-stone-950/30 p-2 rounded-2xl border border-stone-900 w-full max-w-[600px] flex items-center justify-center">
+      {/* Tabletop Main Scene */}
+      <div className="w-full max-w-[1850px] px-2">
+        {/* --- DESKTOP 3-COLUMN LAYOUT (Strictly side-by-side on desktop, never jumps or wraps) --- */}
+        <div className="hidden md:flex flex-row flex-nowrap items-start justify-center gap-4 lg:gap-8 w-full">
+          {/* Left Side Column: Player 1 & Player 3 Monasteries */}
+          <div className="w-auto flex-shrink-0 flex flex-col gap-6 items-center">
+            <MonasteryPanel
+              players={players}
+              activePlayerId={activePlayerId}
+              phase={phase}
+              onBuild={buildStructure}
+              onRecruitMonk={recruitMonkAttempt}
+              onEndTurn={endTurn}
+              onVisitCity={visitCityLocation}
+              onSkipLocation={skipLocationAction}
+              onPerformCellAction={performCellResourceAction}
+              onSkipCellAction={skipCellResourceAction}
+              currentCellType={activePlayerCellType}
+              filterPlayerIds={['player_1', 'player_3']}
+            />
+          </div>
+
+          {/* Center Column: Game Board Container & Chronicle Log directly under it */}
+          <div className="flex-1 min-w-0 flex flex-col items-center gap-6 max-w-[1050px]">
+            <div className="w-full flex items-center justify-center">
+              <Board
+                board={board}
+                players={players}
+                activePlayerId={activePlayerId}
+                phase={phase}
+                onMove={movePlayer}
+              />
+            </div>
+
+            {/* Phase Banner */}
+            <div className="text-center mt-1">
+              {phase === 'MOVE' && (
+                <Tooltip text="Кликните на подсвеченную соседнюю клетку, чтобы переместить монаха." multiline>
+                  <span className="text-base font-bold text-amber-300 bg-amber-950/90 border-2 border-amber-400/60 px-7 py-2.5 rounded-full shadow-2xl animate-pulse text-oldrus tracking-widest">
+                    Фаза перемещения: Сделайте шаг на соседнюю клетку ➔
+                  </span>
+                </Tooltip>
+              )}
+              {phase === 'EVENT_ACTION' && (
+                <Tooltip text="Откройте карту Летописи или выполните действие клетки, на которой стоите." multiline>
+                  <span className="text-base font-bold text-cyan-300 bg-cyan-950/90 border-2 border-cyan-400/60 px-7 py-2.5 rounded-full shadow-2xl animate-pulse text-oldrus tracking-widest">
+                    Фаза события: Ждем выполнения действия на клетке 📜
+                  </span>
+                </Tooltip>
+              )}
+              {phase === 'BUILD' && (
+                <Tooltip text="Постройте следующее здание монастыря или завершите ход кнопкой справа." multiline>
+                  <span className="text-base font-bold text-emerald-300 bg-emerald-950/90 border-2 border-emerald-400/60 px-7 py-2.5 rounded-full shadow-2xl text-oldrus tracking-widest">
+                    Фаза строительства: Возведите постройку или завершите ход 🏛️
+                  </span>
+                </Tooltip>
+              )}
+            </div>
+
+            {/* Chronicle Drawer (Летопись обители log) placed directly UNDER the board map */}
+            <div className="w-full chronicle-drawer p-5 sm:p-6 rounded-3xl flex flex-col h-[260px] justify-between border-t-8 border-b-8 border-[#4a2d0b] shadow-2xl mt-2">
+              <div className="flex items-center gap-3 border-b-2 border-amber-900/30 pb-3 mb-3 text-amber-950 font-bold text-oldrus">
+                <Scroll size={22} className="text-amber-900 drop-shadow" />
+                <span className="text-2xl">Летопись обители</span>
+              </div>
+
+              <div className="flex-1 overflow-y-auto flex flex-col gap-2 pr-2 text-sm text-stone-900 scrollbar-thin">
+                {gameLog.map((log, i) => (
+                  <div
+                    key={i}
+                    className={`py-1.5 border-b border-amber-900/20 leading-relaxed text-sm ${
+                      log.includes('построил') || log.includes('победа')
+                        ? 'text-emerald-900 font-bold'
+                        : log.includes('гибель') || log.includes('погиб')
+                        ? 'text-red-900 font-bold'
+                        : log.includes('[Фаза дохода]')
+                        ? 'text-blue-950 font-bold'
+                        : 'text-stone-950 font-semibold'
+                    }`}
+                  >
+                    {log}
+                  </div>
+                ))}
+                <div ref={logEndRef} />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side Column: Player 2 & Player 4 Monasteries */}
+          <div className="w-auto flex-shrink-0 flex flex-col gap-6 items-center">
+            <MonasteryPanel
+              players={players}
+              activePlayerId={activePlayerId}
+              phase={phase}
+              onBuild={buildStructure}
+              onRecruitMonk={recruitMonkAttempt}
+              onEndTurn={endTurn}
+              onVisitCity={visitCityLocation}
+              onSkipLocation={skipLocationAction}
+              onPerformCellAction={performCellResourceAction}
+              onSkipCellAction={skipCellResourceAction}
+              currentCellType={activePlayerCellType}
+              filterPlayerIds={['player_2', 'player_4']}
+            />
+          </div>
+        </div>
+
+        {/* --- MOBILE LAYOUT (Board map on top, Monasteries horizontally underneath) --- */}
+        <div className="flex md:hidden flex-col items-center gap-6 w-full">
+          <div className="w-full flex items-center justify-center">
             <Board
               board={board}
               players={players}
@@ -374,74 +490,61 @@ function App() {
               onMove={movePlayer}
             />
           </div>
-          <div className="text-center">
+
+          {/* Phase Banner */}
+          <div className="text-center mt-1">
             {phase === 'MOVE' && (
-              <Tooltip text="Кликните на подсвеченную соседнюю клетку, чтобы переместить монаха." multiline>
-                <span className="text-sm font-semibold text-amber-400 bg-amber-950/30 border border-amber-500/20 px-4 py-1.5 rounded-full animate-pulse">
-                  Фаза перемещения: Сделайте шаг на соседнюю клетку
-                </span>
-              </Tooltip>
+              <span className="text-sm font-bold text-amber-300 bg-amber-950/90 border border-amber-400/60 px-4 py-2 rounded-full shadow-xl animate-pulse text-oldrus">
+                Фаза перемещения: Шаг на соседнюю клетку ➔
+              </span>
             )}
             {phase === 'EVENT_ACTION' && (
-              <Tooltip text="Откройте карту Летописи или выполните действие клетки, на которой стоите." multiline>
-                <span className="text-sm font-semibold text-cyan-400 bg-cyan-950/30 border border-cyan-500/20 px-4 py-1.5 rounded-full animate-pulse">
-                  Фаза события: Ждем выполнения действия на клетке
-                </span>
-              </Tooltip>
+              <span className="text-sm font-bold text-cyan-300 bg-cyan-950/90 border border-cyan-400/60 px-4 py-2 rounded-full shadow-xl animate-pulse text-oldrus">
+                Фаза события: Выполните действие 📜
+              </span>
             )}
             {phase === 'BUILD' && (
-              <Tooltip text="Постройте следующее здание монастыря или завершите ход кнопкой справа." multiline>
-                <span className="text-sm font-semibold text-emerald-400 bg-emerald-950/30 border border-emerald-500/20 px-4 py-1.5 rounded-full">
-                  Фаза строительства: Возведите постройку или завершите ход
-                </span>
-              </Tooltip>
+              <span className="text-sm font-bold text-emerald-300 bg-emerald-950/90 border border-emerald-400/60 px-4 py-2 rounded-full shadow-xl text-oldrus">
+                Фаза строительства 🏛️
+              </span>
             )}
           </div>
-        </div>
 
-        {/* Sidebar logs / history panel (Scroll design) */}
-        <div className="w-full lg:w-[350px] chronicle-scroll p-5 rounded-2xl flex flex-col h-[520px] justify-between border-t-8 border-b-8 border-[#3d2508]/80">
-          <div className="flex items-center gap-2 border-b border-amber-900/20 pb-3 mb-3 text-amber-950 font-bold text-oldrus">
-            <Scroll size={20} className="text-amber-900" />
-            <span className="text-lg">Летопись обители</span>
+          {/* Monasteries horizontally placed under the board on mobile */}
+          <div className="w-full overflow-x-auto py-2 px-1 scrollbar-thin">
+            <div className="flex flex-row gap-4 justify-start items-start min-w-max">
+              <MonasteryPanel
+                players={players}
+                activePlayerId={activePlayerId}
+                phase={phase}
+                onBuild={buildStructure}
+                onRecruitMonk={recruitMonkAttempt}
+                onEndTurn={endTurn}
+                onVisitCity={visitCityLocation}
+                onSkipLocation={skipLocationAction}
+                onPerformCellAction={performCellResourceAction}
+                onSkipCellAction={skipCellResourceAction}
+                currentCellType={activePlayerCellType}
+              />
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto flex flex-col gap-2 pr-1 text-sm text-stone-900 scrollbar-thin">
-            {gameLog.map((log, i) => (
-              <div
-                key={i}
-                className={`py-1.5 border-b border-amber-900/10 leading-relaxed ${
-                  log.includes('построил') || log.includes('победа')
-                    ? 'text-emerald-800 font-semibold'
-                    : log.includes('гибель') || log.includes('погиб')
-                    ? 'text-red-800 font-bold'
-                    : log.includes('[Фаза дохода]')
-                    ? 'text-blue-900 font-semibold'
-                    : 'text-stone-900 font-medium'
-                }`}
-              >
-                {log}
-              </div>
-            ))}
-            <div ref={logEndRef} />
+          {/* Chronicle Log on mobile */}
+          <div className="w-full chronicle-drawer p-4 rounded-2xl flex flex-col h-[220px] justify-between border-t-4 border-b-4 border-[#4a2d0b] shadow-xl mt-2">
+            <div className="flex items-center gap-2 border-b border-amber-900/30 pb-2 mb-2 text-amber-950 font-bold text-oldrus">
+              <Scroll size={18} className="text-amber-900 drop-shadow" />
+              <span className="text-xl">Летопись обители</span>
+            </div>
+            <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 pr-1 text-xs text-stone-900 scrollbar-thin">
+              {gameLog.map((log, i) => (
+                <div key={i} className="py-1 border-b border-amber-900/20 leading-snug font-semibold">
+                  {log}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Bottom Sheets (Monasteries panels) */}
-      <MonasteryPanel
-        players={players}
-        activePlayerId={activePlayerId}
-        phase={phase}
-        onBuild={buildStructure}
-        onRecruitMonk={recruitMonkAttempt}
-        onEndTurn={endTurn}
-        onVisitCity={visitCityLocation}
-        onSkipLocation={skipLocationAction}
-        onPerformCellAction={performCellResourceAction}
-        onSkipCellAction={skipCellResourceAction}
-        currentCellType={activePlayerCellType}
-      />
     </div>
   );
 }

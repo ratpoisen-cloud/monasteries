@@ -39,6 +39,8 @@ export interface Helpers {
   bear: boolean;    // Медведь
 }
 
+export type RelicType = 'obraz' | 'zhitie';
+
 export interface Player {
   id: string;
   name: string;
@@ -48,9 +50,12 @@ export interface Player {
   buildings: Buildings;
   tokens: Tokens;
   helpers: Helpers;
-  victoryCards: {
-    obraz: number;
-    zhitie: number;
+  relics: {
+    cells: RelicType | null;
+    church: RelicType | null;
+    walls: RelicType | null;
+    belfry: RelicType | null;
+    cathedral: RelicType | null;
   };
   startCell: { x: number; y: number };
   hasEntered?: boolean;
@@ -70,6 +75,7 @@ export interface LetopisCard {
   id: string;
   title: string;
   quote?: string; // Старославянская цитата
+  quoteSource?: string; // Источник цитаты (например, «Повесть временных лет»)
   description: string;
   actionType:
     | 'resource_gain'

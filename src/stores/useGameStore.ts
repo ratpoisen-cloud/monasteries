@@ -1,6 +1,15 @@
 import { create } from 'zustand';
-import type { GamePhase, Cell, CellType, Player, LetopisCard } from '../types/game';
+import type { GamePhase, Cell, CellType, Player, LetopisCard, RelicType } from '../types/game';
 import { generateLetopisDeck } from '../utils/deckGenerator';
+
+const RELIC_SLOT_ORDER: (keyof Player['relics'])[] = ['cells', 'church', 'walls', 'belfry', 'cathedral'];
+
+function findFirstEmptyRelicSlot(relics: Player['relics']): keyof Player['relics'] | null {
+  for (const slot of RELIC_SLOT_ORDER) {
+    if (!relics[slot]) return slot;
+  }
+  return null;
+}
 
 interface GameState {
   players: Record<string, Player>;
@@ -100,9 +109,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         color: PLAYER_COLORS[i],
         monksCount: 1,
         resources: {
-          molva: 1,
-          silver: 1,
-          bread: 1,
+          molva: 0,
+          silver: 0,
+          bread: 0,
           salt: 0,
           wax: 0,
         },
@@ -121,9 +130,12 @@ export const useGameStore = create<GameState>((set, get) => ({
           warrior: false,
           bear: false,
         },
-        victoryCards: {
-          obraz: 0,
-          zhitie: 0,
+        relics: {
+          cells: null,
+          church: null,
+          walls: null,
+          belfry: null,
+          cathedral: null,
         },
         startCell: START_CELLS[i],
         hasEntered: false,
@@ -136,10 +148,10 @@ export const useGameStore = create<GameState>((set, get) => ({
         let type: CellType = 'empty';
 
         // Central City 2x2
-        if (x === 3 && y === 3) type = 'city_prince';
-        else if (x === 3 && y === 4) type = 'city_bishop';
-        else if (x === 4 && y === 3) type = 'city_fair';
-        else if (x === 4 && y === 4) type = 'city_artel';
+        if (x === 3 && y === 3) type = 'city_artel';
+        else if (x === 3 && y === 4) type = 'city_prince';
+        else if (x === 4 && y === 3) type = 'city_bishop';
+        else if (x === 4 && y === 4) type = 'city_fair';
 
         return {
           x,
@@ -503,12 +515,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       set((state) => {
         const active = state.players[activePlayerId];
         const newMonksCount = Math.max(0, active.monksCount - 1);
-        const zhitieGain = active.victoryCards.zhitie + 1;
-        
+        const slot = findFirstEmptyRelicSlot(active.relics);
+        const newRelics = slot ? { ...active.relics, [slot]: 'zhitie' as RelicType } : active.relics;
+
         const updatedBoard = state.board.map((row) =>
           row.map((c) => {
             if (c.occupantId === activePlayerId) {
-              // Place Chapel here
               return { ...c, occupantId: null, type: 'chapel' as CellType };
             }
             return c;
@@ -521,8 +533,8 @@ export const useGameStore = create<GameState>((set, get) => ({
             [activePlayerId]: {
               ...active,
               monksCount: newMonksCount,
-              hasEntered: false, // Reset to allow starting platform render and choice
-              victoryCards: { ...active.victoryCards, zhitie: zhitieGain },
+              hasEntered: false,
+              relics: newRelics,
             },
           },
           board: updatedBoard,
@@ -616,6 +628,54 @@ export const useGameStore = create<GameState>((set, get) => ({
     } else if (activeEventCard.actionType === 'place_token') {
       const { type } = activeEventCard.actionPayload;
       const isPrivate = type === 'village' || type === 'saltworks';
+
+      const active = players[activePlayerId];
+      const newResources = { ...active.resources };
+      let resourceLog = '';
+      if (type === 'village') {
+        newResources.bread += 1;
+        resourceLog = ' Село приносит 1 ед. Хлеба.';
+      } else if (type === 'saltworks') {
+        newResources.salt += 1;
+        resourceLog = ' Солеварня даёт 1 ед. Соли.';
+      }
+      const tokenName =
+        type === 'village' ? 'Село' :
+        type === 'saltworks' ? 'Солеварня' :
+        type === 'fortress' ? 'Крепость' :
+        type === 'river' ? 'Река' :
+        'Бурелом';
+
+      // Windfall: retreat and immediately end turn (skip BUILD)
+      if (type === 'windfall') {
+        const prevCell = active.prevCell;
+        const boardWithRetreat = board.map((row) =>
+          row.map((c) => {
+            if (prevCell && c.x === prevCell.x && c.y === prevCell.y) {
+              return { ...c, occupantId: activePlayerId };
+            }
+            if (c.x === curX && c.y === curY) {
+              return { ...c, type: 'windfall', ownerId: null, occupantId: null };
+            }
+            return c;
+          })
+        );
+
+        set({
+          board: boardWithRetreat,
+          players: {
+            ...players,
+            [activePlayerId]: { ...active, resources: newResources, hasEntered: false, prevCell: null },
+          },
+          gameLog: [...gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}) и отступил назад.${resourceLog}`],
+          activeEventCard: null,
+          discardDeck: [...discardDeck, activeEventCard],
+        });
+
+        get().endTurn();
+        return;
+      }
+
       const updatedBoard = board.map((row) =>
         row.map((c) => {
           if (c.x === curX && c.y === curY) {
@@ -625,63 +685,16 @@ export const useGameStore = create<GameState>((set, get) => ({
         })
       );
 
-      set((state) => {
-        const active = state.players[activePlayerId];
-        const newResources = { ...active.resources };
-        let resourceLog = '';
-        if (type === 'village') {
-          newResources.bread += 1;
-          resourceLog = ' Село приносит 1 ед. Хлеба.';
-        } else if (type === 'saltworks') {
-          newResources.salt += 1;
-          resourceLog = ' Солеварня даёт 1 ед. Соли.';
-        }
-        const tokenName =
-          type === 'village' ? 'Село' :
-          type === 'saltworks' ? 'Солеварня' :
-          type === 'fortress' ? 'Крепость' :
-          type === 'river' ? 'Река' :
-          'Бурелом';
-
-        // Windfall: retreat player to previous cell
-        if (type === 'windfall') {
-          const prevCell = active.prevCell;
-          const boardWithRetreat = updatedBoard.map((row) =>
-            row.map((c) => {
-              if (prevCell && c.x === prevCell.x && c.y === prevCell.y) {
-                return { ...c, occupantId: activePlayerId };
-              }
-              // Remove occupant from the windfall cell
-              if (c.x === curX && c.y === curY) {
-                return { ...c, occupantId: null };
-              }
-              return c;
-            })
-          );
-          return {
-            board: boardWithRetreat,
-            players: {
-              ...state.players,
-              [activePlayerId]: { ...active, resources: newResources, hasEntered: false, prevCell: null },
-            },
-            gameLog: [...state.gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}) и отступил назад.${resourceLog}`],
-            activeEventCard: null,
-            discardDeck: [...state.discardDeck, activeEventCard],
-            phase: 'BUILD',
-          };
-        }
-
-        return {
-          board: updatedBoard,
-          players: {
-            ...state.players,
-            [activePlayerId]: { ...active, resources: newResources },
-          },
-          gameLog: [...state.gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}).${resourceLog}`],
-          activeEventCard: null,
-          discardDeck: [...state.discardDeck, activeEventCard],
-          phase: 'BUILD',
-        };
+      set({
+        board: updatedBoard,
+        players: {
+          ...players,
+          [activePlayerId]: { ...active, resources: newResources },
+        },
+        gameLog: [...gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}).${resourceLog}`],
+        activeEventCard: null,
+        discardDeck: [...discardDeck, activeEventCard],
+        phase: 'BUILD',
       });
     } else if (activeEventCard.actionType === 'get_helper') {
       const { type } = activeEventCard.actionPayload;
@@ -706,16 +719,25 @@ export const useGameStore = create<GameState>((set, get) => ({
         };
       });
     } else if (activeEventCard.actionType === 'wildcard') {
-      // Obraz Card
+      // Obraz Card — place in first empty relic slot
       set((state) => {
         const active = state.players[activePlayerId];
-        const activeObraz = active.victoryCards.obraz + 1;
+        const slot = findFirstEmptyRelicSlot(active.relics);
+        if (!slot) {
+          return {
+            gameLog: [...state.gameLog, `${active.name} получил Образ, но все ячейки заняты.`],
+            activeEventCard: null,
+            discardDeck: [...state.discardDeck, activeEventCard],
+            phase: 'BUILD',
+          };
+        }
+        const newRelics = { ...active.relics, [slot]: 'obraz' as RelicType };
         return {
           players: {
             ...state.players,
             [activePlayerId]: {
               ...active,
-              victoryCards: { ...active.victoryCards, obraz: activeObraz },
+              relics: newRelics,
             },
           },
           gameLog: [...state.gameLog, `${active.name} получил благословение Иконы (Образ +1 ПО).`],
@@ -784,16 +806,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     };
 
     const newBuildings = { ...p.buildings, [structure]: false };
-    const newVictoryCards = { ...p.victoryCards };
-    let relicLost = false;
-
-    if (newVictoryCards.obraz > 0) {
-      newVictoryCards.obraz -= 1;
-      relicLost = true;
-    } else if (newVictoryCards.zhitie > 0) {
-      newVictoryCards.zhitie -= 1;
-      relicLost = true;
-    }
+    const relicInBuilding = p.relics[structure];
+    const newRelics = { ...p.relics, [structure]: null };
 
     set((state) => ({
       players: {
@@ -801,16 +815,16 @@ export const useGameStore = create<GameState>((set, get) => ({
         [activePlayerId]: {
           ...p,
           buildings: newBuildings,
-          victoryCards: newVictoryCards,
+          relics: newRelics,
         },
       },
       gameLog: [
         ...state.gameLog,
-        `${p.name} потерял ${buildingNames[structure]} в пожаре.${relicLost ? ' Реликвия в нём сгорела безвозвратно.' : ''}`,
+        `${p.name} потерял ${buildingNames[structure]} в пожаре.${relicInBuilding ? ` Реликвия (${relicInBuilding === 'obraz' ? 'Образ' : 'Житие'}) в нём сгорела безвозвратно.` : ''}`,
       ],
       showDestructionDialog: false,
       activeEventCard: null,
-      discardDeck: [...state.discardDeck, activeEventCard],
+      discardDeck: activeEventCard ? [...state.discardDeck, activeEventCard] : state.discardDeck,
       phase: 'BUILD',
     }));
   },
@@ -1256,15 +1270,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   skipFortressAction: () => {
-    set((state) => ({
+    set({
       showFortressDialog: false,
       phase: 'BUILD',
-    }));
+    });
   },
 
   performCellResourceAction: (cellType) => {
-    const { activePlayerId, players, board } = get();
-    const activePlayer = players[activePlayerId];
+    const { activePlayerId, board } = get();
     const cell = board.flat().find((c) => c.occupantId === activePlayerId);
     if (!cell) return;
 
