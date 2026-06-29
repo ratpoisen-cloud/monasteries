@@ -15,8 +15,8 @@
 }
 
 @font-face {
-  font-family: 'Izvod';
-  src: url('./assets/fonts/ofont.ru_Izvod.ttf') format('truetype');
+  font-family: 'TriodPostnaja';
+  src: url('./assets/fonts/ofont.ru_TriodPostnaja.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -27,11 +27,11 @@
 :root {
   --font-evangelie: 'EvangelieTT', serif;
   --font-monomakh: 'Monomakh Unicode', serif;
-  --font-izvod: 'Izvod', serif;
+  --font-izvod: 'TriodPostnaja', serif;
 }
 
 body {
-  font-family: 'Izvod', serif;
+  font-family: 'TriodPostnaja', serif;
   background-color: #050404;
   background-image: radial-gradient(circle, #120e0d 0%, #020101 100%);
   color: #eae5d9;
@@ -96,7 +96,7 @@ body {
 }
 
 .text-izvod {
-  font-family: 'Izvod', serif;
+  font-family: 'TriodPostnaja', serif;
 }
 
 /* Red-gold primary buttons matching StartScreen */
