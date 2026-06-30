@@ -181,9 +181,9 @@ export const TradeModal: React.FC<TradeModalProps> = ({
         {/* Confirm Button */}
         <button
           onClick={handleConfirm}
-          disabled={netSilver < 0}
+          disabled={!netOk}
           className={`w-full py-3 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition-all ${
-            netSilver >= 0
+            netOk
               ? 'btn-red-gold cursor-pointer text-oldrus tracking-wider'
               : 'bg-stone-300 text-stone-500 border border-stone-400 cursor-not-allowed'
           }`}

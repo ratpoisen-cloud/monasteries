@@ -1,5 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
-import { Tooltip } from './components/Tooltip';
+import { useEffect, useState } from 'react';
 import { useGameStore } from './stores/useGameStore';
 import { Board } from './components/Board';
 import { MonasteryPanel } from './components/MonasteryPanel';
@@ -52,12 +51,6 @@ function App() {
   };
   const buildOrder = ['cells', 'church', 'walls', 'belfry', 'cathedral'] as const;
   const [loading, setLoading] = useState<boolean>(false);
-  const logEndRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll the game logs
-  useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [gameLog]);
 
   // Show confetti when game is over
   useEffect(() => {
@@ -124,7 +117,7 @@ function App() {
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-cover bg-center transition-all duration-1000 select-none"
-        style={{ backgroundImage: "linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.9)), url('/edited-image.jpg')" }}
+        style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.9)), url(${import.meta.env.BASE_URL}edited-image.jpg)` }}
       >
         <div className="parchment-codex max-w-md w-full p-10 sm:p-12 flex flex-col gap-6 shadow-2xl relative items-center justify-center border-4 double border-amber-900/80 rounded-3xl animate-scale-in">
           <div className="absolute top-3 left-3 right-3 bottom-3 border border-amber-900/20 pointer-events-none rounded-2xl" />
@@ -161,7 +154,7 @@ function App() {
     return (
       <div 
         className="relative w-full h-screen bg-cover bg-center flex flex-col items-center justify-start pt-32 p-6 select-none"
-        style={{ backgroundImage: "url('/edited-image.jpg')" }}
+        style={{ backgroundImage: `url(${import.meta.env.BASE_URL}edited-image.jpg)` }}
       >
         {/* Semi-transparent gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/35 z-0"></div>
@@ -265,7 +258,12 @@ function App() {
 
   // --- MAIN GAMEPLAY VIEW ---
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 md:p-6 pb-12">
+    <div className="min-h-screen gameplay-bg flex flex-col items-center p-4 md:p-6 pb-12"
+        style={{
+          '--bg-desktop': `url(${import.meta.env.BASE_URL}assets/background.webp)`,
+          '--bg-mobile': `url(${import.meta.env.BASE_URL}assets/bacgraund2.webp)`,
+        } as React.CSSProperties}
+      >
       {/* Modals */}
       <EventModal
         card={activeEventCard}
@@ -346,38 +344,19 @@ function App() {
         </div>
       )}
 
-      {/* Top Floating Glass HUD */}
-      <header className="w-full max-w-[1300px] flex justify-between items-center hud-card p-4 sm:p-5 mb-8 shadow-2xl">
-        <div className="flex items-center gap-4">
-          <span className="text-3xl sm:text-4xl font-bold text-amber-300 text-oldrus tracking-widest drop-shadow-lg">
-            ⚜️ Монастыри
-          </span>
-          <span className="text-xs text-amber-200/70 font-mono bg-amber-950/60 px-3.5 py-1.5 rounded-full border border-amber-500/30 shadow-inner">
-            Летопись: Ход {turnNumber}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-stone-300 font-medium tracking-wide">Ход игрока:</span>
-          <span
-            className="font-bold text-oldrus flex items-center gap-2.5 px-4 py-2 rounded-2xl border border-amber-400/40 bg-amber-950/80 shadow-lg hud-card-active"
-            style={{ color: activePlayer.color }}
-          >
-            <span
-              className="w-3.5 h-3.5 rounded-full inline-block shadow-md ring-2 ring-white/30"
-              style={{ backgroundColor: activePlayer.color }}
-            />
-            <span className="text-xl">{activePlayer.name}</span>
-          </span>
-        </div>
-      </header>
+      {/* Minimal title */}
+      <div className="w-full max-w-[1300px] text-center mb-6">
+        <span className="text-lg sm:text-xl font-bold text-yellow-200 text-oldrus tracking-widest drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+          Монастыри
+        </span>
+      </div>
 
       {/* Tabletop Main Scene */}
       <div className="w-full max-w-[1850px] px-2">
-        {/* --- DESKTOP 3-COLUMN LAYOUT (Strictly side-by-side on desktop, never jumps or wraps) --- */}
-        <div className="hidden md:flex flex-row flex-nowrap items-start justify-center gap-4 lg:gap-8 w-full">
-          {/* Left Side Column: Player 1 & Player 3 Monasteries */}
-          <div className="w-auto flex-shrink-0 flex flex-col gap-6 items-center">
+        {/* --- DESKTOP 4-COLUMN LAYOUT: Player 1 | Board | Player 2 | Chronicle --- */}
+        <div className="hidden xl:flex flex-row flex-nowrap items-stretch justify-center gap-1 w-full">
+          {/* Column 1: Player 1 (+ Player 3) */}
+          <div className="w-[220px] flex-shrink-0 flex flex-col gap-6 items-center">
             <MonasteryPanel
               players={players}
               activePlayerId={activePlayerId}
@@ -394,8 +373,8 @@ function App() {
             />
           </div>
 
-          {/* Center Column: Game Board Container & Chronicle Log directly under it */}
-          <div className="flex-1 min-w-0 flex flex-col items-center gap-6 max-w-[1050px]">
+          {/* Column 2: Game Board */}
+          <div className="flex-1 flex flex-col items-center justify-center max-w-[1050px]">
             <div className="w-full flex items-center justify-center">
               <Board
                 board={board}
@@ -405,63 +384,10 @@ function App() {
                 onMove={movePlayer}
               />
             </div>
-
-            {/* Phase Banner */}
-            <div className="text-center mt-1">
-              {phase === 'MOVE' && (
-                <Tooltip text="Кликните на подсвеченную соседнюю клетку, чтобы переместить монаха." multiline>
-                  <span className="text-base font-bold text-amber-300 bg-amber-950/90 border-2 border-amber-400/60 px-7 py-2.5 rounded-full shadow-2xl animate-pulse text-oldrus tracking-widest">
-                    Фаза перемещения: Сделайте шаг на соседнюю клетку ➔
-                  </span>
-                </Tooltip>
-              )}
-              {phase === 'EVENT_ACTION' && (
-                <Tooltip text="Откройте карту Летописи или выполните действие клетки, на которой стоите." multiline>
-                  <span className="text-base font-bold text-cyan-300 bg-cyan-950/90 border-2 border-cyan-400/60 px-7 py-2.5 rounded-full shadow-2xl animate-pulse text-oldrus tracking-widest">
-                    Фаза события: Ждем выполнения действия на клетке 📜
-                  </span>
-                </Tooltip>
-              )}
-              {phase === 'BUILD' && (
-                <Tooltip text="Постройте следующее здание монастыря или завершите ход кнопкой справа." multiline>
-                  <span className="text-base font-bold text-emerald-300 bg-emerald-950/90 border-2 border-emerald-400/60 px-7 py-2.5 rounded-full shadow-2xl text-oldrus tracking-widest">
-                    Фаза строительства: Возведите постройку или завершите ход 🏛️
-                  </span>
-                </Tooltip>
-              )}
-            </div>
-
-            {/* Chronicle Drawer (Летопись обители log) placed directly UNDER the board map */}
-            <div className="w-full chronicle-drawer p-5 sm:p-6 rounded-3xl flex flex-col h-[260px] justify-between border-t-8 border-b-8 border-[#4a2d0b] shadow-2xl mt-2">
-              <div className="flex items-center gap-3 border-b-2 border-amber-900/30 pb-3 mb-3 text-amber-950 font-bold text-oldrus">
-                <Scroll size={22} className="text-amber-900 drop-shadow" />
-                <span className="text-2xl">Летопись обители</span>
-              </div>
-
-              <div className="flex-1 overflow-y-auto flex flex-col gap-2 pr-2 text-sm text-stone-900 scrollbar-thin">
-                {gameLog.map((log, i) => (
-                  <div
-                    key={i}
-                    className={`py-1.5 border-b border-amber-900/20 leading-relaxed text-sm ${
-                      log.includes('построил') || log.includes('победа')
-                        ? 'text-emerald-900 font-bold'
-                        : log.includes('гибель') || log.includes('погиб')
-                        ? 'text-red-900 font-bold'
-                        : log.includes('[Фаза дохода]')
-                        ? 'text-blue-950 font-bold'
-                        : 'text-stone-950 font-semibold'
-                    }`}
-                  >
-                    {log}
-                  </div>
-                ))}
-                <div ref={logEndRef} />
-              </div>
-            </div>
           </div>
 
-          {/* Right Side Column: Player 2 & Player 4 Monasteries */}
-          <div className="w-auto flex-shrink-0 flex flex-col gap-6 items-center">
+          {/* Column 3: Player 2 (+ Player 4) */}
+          <div className="w-[220px] flex-shrink-0 flex flex-col gap-6 items-center">
             <MonasteryPanel
               players={players}
               activePlayerId={activePlayerId}
@@ -477,10 +403,39 @@ function App() {
               filterPlayerIds={['player_2', 'player_4']}
             />
           </div>
+
+          {/* Column 4: Chronicle Log (Летопись обители) — последняя запись сверху */}
+          <div className="w-auto flex-shrink-0 flex flex-col items-start">
+            <div className="w-[280px] chronicle-drawer p-4 rounded-3xl flex flex-col h-[calc(100vh-160px)] border-t-8 border-b-8 border-[#4a2d0b] shadow-2xl sticky top-4">
+              <div className="flex items-center gap-3 border-b-2 border-amber-900/30 pb-3 mb-3 text-amber-950 font-bold text-oldrus">
+                <Scroll size={20} className="text-amber-900 drop-shadow" />
+                <span className="text-xl">Летопись обители</span>
+              </div>
+
+              <div className="flex-1 overflow-y-auto flex flex-col gap-2 pr-2 text-sm text-stone-900 scrollbar-thin">
+                {[...gameLog].reverse().map((log, i) => (
+                  <div
+                    key={i}
+                    className={`py-1.5 border-b border-amber-900/20 leading-relaxed text-sm ${
+                      log.includes('построил') || log.includes('победа')
+                        ? 'text-emerald-900 font-bold'
+                        : log.includes('гибель') || log.includes('погиб')
+                        ? 'text-red-900 font-bold'
+                        : log.includes('[Фаза дохода]')
+                        ? 'text-blue-950 font-bold'
+                        : 'text-stone-950 font-semibold'
+                    }`}
+                  >
+                    {log}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* --- MOBILE LAYOUT (Board map on top, Monasteries horizontally underneath) --- */}
-        <div className="flex md:hidden flex-col items-center gap-6 w-full">
+        <div className="flex xl:hidden flex-col items-center gap-6 w-full">
           <div className="w-full flex items-center justify-center">
             <Board
               board={board}
@@ -491,56 +446,50 @@ function App() {
             />
           </div>
 
-          {/* Phase Banner */}
-          <div className="text-center mt-1">
-            {phase === 'MOVE' && (
-              <span className="text-sm font-bold text-amber-300 bg-amber-950/90 border border-amber-400/60 px-4 py-2 rounded-full shadow-xl animate-pulse text-oldrus">
-                Фаза перемещения: Шаг на соседнюю клетку ➔
-              </span>
-            )}
-            {phase === 'EVENT_ACTION' && (
-              <span className="text-sm font-bold text-cyan-300 bg-cyan-950/90 border border-cyan-400/60 px-4 py-2 rounded-full shadow-xl animate-pulse text-oldrus">
-                Фаза события: Выполните действие 📜
-              </span>
-            )}
-            {phase === 'BUILD' && (
-              <span className="text-sm font-bold text-emerald-300 bg-emerald-950/90 border border-emerald-400/60 px-4 py-2 rounded-full shadow-xl text-oldrus">
-                Фаза строительства 🏛️
-              </span>
-            )}
-          </div>
+          {/* Monasteries — вертикальный стек на мобилке */}
+          <div className="w-full max-w-[840px] xl:max-w-[900px] flex flex-col gap-3">
+            <MonasteryPanel
+              players={players}
+              activePlayerId={activePlayerId}
+              phase={phase}
+              onBuild={buildStructure}
+              onRecruitMonk={recruitMonkAttempt}
+              onEndTurn={endTurn}
+              onVisitCity={visitCityLocation}
+              onSkipLocation={skipLocationAction}
+              onPerformCellAction={performCellResourceAction}
+              onSkipCellAction={skipCellResourceAction}
+              currentCellType={activePlayerCellType}
+              filterPlayerIds={['player_1', 'player_3']}
+            />
+            <MonasteryPanel
+              players={players}
+              activePlayerId={activePlayerId}
+              phase={phase}
+              onBuild={buildStructure}
+              onRecruitMonk={recruitMonkAttempt}
+              onEndTurn={endTurn}
+              onVisitCity={visitCityLocation}
+              onSkipLocation={skipLocationAction}
+              onPerformCellAction={performCellResourceAction}
+              onSkipCellAction={skipCellResourceAction}
+              currentCellType={activePlayerCellType}
+              filterPlayerIds={['player_2', 'player_4']}
+            />
 
-          {/* Monasteries horizontally placed under the board on mobile */}
-          <div className="w-full overflow-x-auto py-2 px-1 scrollbar-thin">
-            <div className="flex flex-row gap-4 justify-start items-start min-w-max">
-              <MonasteryPanel
-                players={players}
-                activePlayerId={activePlayerId}
-                phase={phase}
-                onBuild={buildStructure}
-                onRecruitMonk={recruitMonkAttempt}
-                onEndTurn={endTurn}
-                onVisitCity={visitCityLocation}
-                onSkipLocation={skipLocationAction}
-                onPerformCellAction={performCellResourceAction}
-                onSkipCellAction={skipCellResourceAction}
-                currentCellType={activePlayerCellType}
-              />
-            </div>
-          </div>
-
-          {/* Chronicle Log on mobile */}
-          <div className="w-full chronicle-drawer p-4 rounded-2xl flex flex-col h-[220px] justify-between border-t-4 border-b-4 border-[#4a2d0b] shadow-xl mt-2">
-            <div className="flex items-center gap-2 border-b border-amber-900/30 pb-2 mb-2 text-amber-950 font-bold text-oldrus">
-              <Scroll size={18} className="text-amber-900 drop-shadow" />
-              <span className="text-xl">Летопись обители</span>
-            </div>
-            <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 pr-1 text-xs text-stone-900 scrollbar-thin">
-              {gameLog.map((log, i) => (
-                <div key={i} className="py-1 border-b border-amber-900/20 leading-snug font-semibold">
-                  {log}
-                </div>
-              ))}
+            {/* Chronicle Log on mobile */}
+            <div className="w-full chronicle-drawer p-4 rounded-2xl flex flex-col h-[220px] justify-between border-t-4 border-b-4 border-[#4a2d0b] shadow-xl mt-2">
+              <div className="flex items-center gap-2 border-b border-amber-900/30 pb-2 mb-2 text-amber-950 font-bold text-oldrus">
+                <Scroll size={18} className="text-amber-900 drop-shadow" />
+                <span className="text-xl">Летопись обители</span>
+              </div>
+              <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 pr-1 text-xs text-stone-900 scrollbar-thin">
+                {[...gameLog].reverse().map((log, i) => (
+                  <div key={i} className="py-1 border-b border-amber-900/20 leading-snug font-semibold">
+                    {log}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Обильный урожай',
     quote: '«Земля бо приношаше плод свой в изобилии...»',
+    quoteSource: '— «Повесть временных лет», 1092 г.',
     description: 'Год выдался на редкость урожайным. Получите 2 ед. Хлеба.',
     actionType: 'resource_gain',
     actionPayload: { bread: 2 },
@@ -12,6 +13,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Бортничество',
     quote: '«И бяху борти мнози во лесах тех...»',
+    quoteSource: '— Грамота Великого Князя, XIV в.',
     description: 'В лесных угодьях собрано много дикого меда и воска. Получите 2 ед. Воска.',
     actionType: 'resource_gain',
     actionPayload: { wax: 2 },
@@ -19,6 +21,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Щедрые дары селян',
     quote: '«И приношаху благочестивые люди дары своя во обитель...»',
+    quoteSource: '— Печерский Патерик',
     description: 'Окрестные крестьяне пожертвовали монастырю свои припасы. Получите 1 ед. Хлеба и 1 ед. Воска.',
     actionType: 'resource_gain',
     actionPayload: { bread: 1, wax: 1 },
@@ -26,6 +29,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Ярмарочный день',
     quote: '«И бысть торг велик на реце...»',
+    quoteSource: '— Новгородская первая летопись',
     description: 'Монастырские ремесла пользовались большим успехом. Получите 1 ед. Серебра.',
     actionType: 'resource_gain',
     actionPayload: { silver: 1 },
@@ -33,6 +37,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Милостыня князя',
     quote: '«Князь бо благоверный пожалова обитель нашу...»',
+    quoteSource: '— Вкладная книга монастыря',
     description: 'Князь прислал серебро на помин души предков. Получите 2 ед. Серебра.',
     actionType: 'resource_gain',
     actionPayload: { silver: 2 },
@@ -42,6 +47,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Засуха',
     quote: '«И зноем великим выгоре бо земля...»',
+    quoteSource: '— Лаврентьевская летопись, 1124 г.',
     description: 'Зной погубил посевы. Потеряйте 1 ед. Хлеба. Если хлеба нет, вы теряете 1 ед. Молвы.',
     actionType: 'resource_loss',
     actionPayload: { bread: 1, fallback: 'molva' },
@@ -49,6 +55,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Моровая сырость',
     quote: '«И гниша бо запасы во клетях от сырости великия...»',
+    quoteSource: '— Псковская летопись',
     description: 'Сырость испортила запасы воска. Потеряйте 1 ед. Воска.',
     actionType: 'resource_loss',
     actionPayload: { wax: 1 },
@@ -56,6 +63,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Пожар в амбаре',
     quote: '«И погореша житницы со всяким хлебом...»',
+    quoteSource: '— Летописец Переславля-Залесского',
     description: 'Внезапный огонь уничтожил часть припасов. Потеряйте 2 ед. Хлеба.',
     actionType: 'resource_loss',
     actionPayload: { bread: 2 },
@@ -65,6 +73,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Основание Села',
     quote: '«И начаша люди селитися окрест обители...»',
+    quoteSource: '— Сказание о святых обителях',
     description: 'Вы нашли благодатную землю для крестьян. Разместите жетон «Село» вашего цвета на этой клетке.',
     actionType: 'place_token',
     actionPayload: { type: 'village' },
@@ -72,6 +81,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Соляной источник',
     quote: '«И обретоша кладезь соляный...»',
+    quoteSource: '— Древнерусский Пролог',
     description: 'Найдена богатая солеварня. Разместите жетон «Солеварня» вашего цвета на этой клетке.',
     actionType: 'place_token',
     actionPayload: { type: 'saltworks' },
@@ -79,6 +89,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Бурелом в пуще',
     quote: '«Падоша бо дерева великия от ветра...»',
+    quoteSource: '— Вологодская летопись',
     description: 'Путь заблокирован поваленными стволами. Разместите здесь жетон «Бурелом». Клетка становится непроходимой.',
     actionType: 'place_token',
     actionPayload: { type: 'windfall' },
@@ -86,6 +97,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Строительство крепости',
     quote: '«И воздвигоша твердыню каменну...»',
+    quoteSource: '— Ипатьевская летопись',
     description: 'Возведите Крепость на этой клетке. Любой игрок может нанять здесь Дружинника за 2 Хлеба.',
     actionType: 'place_token',
     actionPayload: { type: 'fortress' },
@@ -93,6 +105,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Речная заводь',
     quote: '«И обретеся река во пустыни...»',
+    quoteSource: '— Книга пророка Исаии',
     description: 'Поставьте жетон Реки на этой клетке. При переходе — бросок кубика: чёт = успех, нечет = остаётесь.',
     actionType: 'place_token',
     actionPayload: { type: 'river' },
@@ -102,6 +115,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Набег кочевников',
     quote: '«Придоша бо погании степные люди...»',
+    quoteSource: '— «Повесть временных лет», 1093 г.',
     description: 'Свирепые степняки рыщут по округе. Бросьте кубик: ЧЕТ — вы спаслись, НЕЧЕТ — монах погибает. Дружинник или Медведь защитят вас автоматически (помощник при этом теряется).',
     actionType: 'monk_death_check',
     actionPayload: { threat: 'nomads', bribeOptions: { silver: 1, bread: 1 } },
@@ -110,6 +124,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Лесные язычники',
     quote: '«И поклоняхуся бесом во кумирех лесных...»',
+    quoteSource: '— Слово о идолах, XII в.',
     description: 'Монах забрел в капище лесных язычников. Бросьте кубик: ЧЕТ — вы смогли убедить их словом, НЕЧЕТ — монах принесен в жертву. Дружинник или Медведь спасут вас автоматом (теряя помощника).',
     actionType: 'monk_death_check',
     actionPayload: { threat: 'pagans', bribeOptions: { bread: 1, wax: 1 } },
@@ -118,6 +133,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Разбойничья ватага',
     quote: '«И одолеша разбойницы на путех...»',
+    quoteSource: '— Радзивилловская летопись',
     description: 'Лесные грабители перекрыли дорогу. Вы можете откупиться 1 Серебром или 2 Хлеба. Иначе бросьте кубик: ЧЕТ — пронесло, НЕЧЕТ — монах погибает. Дружинник или Медведь спасут вас автоматом.',
     actionType: 'monk_death_check',
     actionPayload: { threat: 'bandits', bribeOptions: { silver: 1, bread: 2 } },
@@ -128,6 +144,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Храбрый дружинник',
     quote: '«И прииде муж ратный во обитель...»',
+    quoteSource: '— Сказание о Мамаевом побоище',
     description: 'Опытный воин вызвался оберегать монастырь от лихих людей. Вы бесплатно получаете помощника «Дружинник».',
     actionType: 'get_helper',
     actionPayload: { type: 'warrior' },
@@ -135,6 +152,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Прирученный медведь',
     quote: '«И бысть зверь сей кроток, яко овча...»',
+    quoteSource: '— Житие Сергия Радонежского',
     description: 'Лесной медведь прибился к келье и защищает монаха. Вы бесплатно получаете помощника «Медведь».',
     actionType: 'get_helper',
     actionPayload: { type: 'bear' },
@@ -144,6 +162,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Чудотворный Образ',
     quote: '«И явися икона пречудная во лесу...»',
+    quoteSource: '— Сказание о явлениях икон',
     description: 'Монах обрел чудотворную икону. Разместите карту «Образ» в монастыре. Она приносит 1 победное очко в конце игры.',
     actionType: 'wildcard',
     actionPayload: { type: 'obraz' },
@@ -151,6 +170,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Странник-благочестивец',
     quote: '«И прииде странник издалеча, неся святыню...»',
+    quoteSource: '— Христианский Лимонарь',
     description: 'Странник подарил монастырю святой образ в знак благодарности за приют. Получите карту «Образ» (+1 ПО).',
     actionType: 'wildcard',
     actionPayload: { type: 'obraz' },
@@ -158,6 +178,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Встреча с Отшельником',
     quote: '«И обретоша старца святаго во пустыни живуща, в посте и молитве дни препровождающа, иже благослови их святынею...»',
+    quoteSource: '— Патерик Скитский',
     description: 'В глухой чаще монах встретил святого старца. Отшельник передал вам чудотворную икону. Получите карточку «Образ», которая принесет 1 победное очко.',
     actionType: 'wildcard',
     actionPayload: { type: 'obraz' },
@@ -167,6 +188,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Великий пожар',
     quote: '«И загореся от искры малой клеть, и пламень велий объя обитель, и погореша вся строения дотла...»',
+    quoteSource: '— Софийская первая летопись',
     description: 'Страшный пожар охватил ваш монастырь. Вы теряете одно построенное здание (на ваш выбор). Если в этом здании находилась реликвия, она сгорает безвозвратно.',
     actionType: 'building_destruction',
     actionPayload: { destroy: 'building', playerChoice: true },
@@ -176,6 +198,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Лютая зима',
     quote: '«И бысть зима люта зело, и мрази велицы, и снези глубоцы, яко и птицам небесным падати от стужи...»',
+    quoteSource: '— Никоновская летопись, 1230 г.',
     description: 'Суровые холода требуют дополнительных припасов для обогрева братии. Потеряйте 1 ед. Хлеба и 1 ед. Воска. Если Воска нет, списание игнорируется.',
     actionType: 'resource_loss',
     actionPayload: { bread: 1, wax: 1 },
@@ -183,6 +206,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Разорение путей',
     quote: '«И быша пути затворены от злых людей и татей, и не бе прохода ни конному, ни пешему...»',
+    quoteSource: '— Галицко-Волынская летопись',
     description: 'Торговые пути перекрыты разбойниками. Игрок теряет 1 ед. Серебра (или 1 ед. Соли, если Серебра нет).',
     actionType: 'resource_loss',
     actionPayload: { silver: 1, fallback: 'salt' },
@@ -192,6 +216,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Боярский вклад',
     quote: '«Болярин же некий христолюбивый, умилосердився о спасении души своея, принесе во обитель сребро на строение...»',
+    quoteSource: '— Вкладная синодичная запись',
     description: 'Знатный человек сделал щедрое пожертвование. Получите 1 ед. Серебра и 1 ед. Молвы.',
     actionType: 'resource_gain',
     actionPayload: { silver: 1, molva: 1 },
@@ -199,6 +224,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
   {
     title: 'Чудесное исцеление',
     quote: '«И мнози болящии прихождаху ко обители, и благодатию Божиею исцеление получаху, и прославиша место сие...»',
+    quoteSource: '— Киево-Печерский Патерик',
     description: 'Слава о благодати монастыря разнеслась по всем землям. Получите 2 ед. Молвы.',
     actionType: 'resource_gain',
     actionPayload: { molva: 2 },

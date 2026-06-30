@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Cell as CellType, Player } from '../types/game';
 import { Cell } from './Cell';
+import { asset } from '../utils/paths';
 
 interface BoardProps {
   board: CellType[][];
@@ -65,83 +66,87 @@ export const Board: React.FC<BoardProps> = ({
   const unenteredMonks = Object.values(players).filter((p) => !p.hasEntered);
 
   return (
-    <div 
-      className="relative w-full max-w-[600px] aspect-square wood-panel p-1.5 grid grid-cols-8 grid-rows-8 gap-0.5 rounded-2xl select-none shadow-inner border-2 border-amber-950/40"
-      style={{ 
-        backgroundImage: "url('/assets/map.png')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      {/* 8x8 Grid Cells */}
-      {board.flat().map((cell) => {
-        const x = cell.x;
-        const y = cell.y;
-        const isCityCell = cell.type.startsWith('city_');
+    <div className="relative w-full aspect-square flex items-center justify-center select-none shadow-2xl transition-all duration-300"
+        style={{ maxWidth: 'min(1050px, calc(100vh - 140px))' }}
+      >
+      <div 
+        className="relative w-full h-full grid grid-cols-8 grid-rows-8 gap-0.5 sm:gap-1.5 rounded-2xl shadow-2xl border border-amber-900/30"
+        style={{ 
+          backgroundImage: `url('${asset('map_clean.jpg')}')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        {/* 8x8 Grid Cells */}
+        {board.flat().map((cell) => {
+          const x = cell.x;
+          const y = cell.y;
+          const isCityCell = cell.type.startsWith('city_');
 
-        return (
-          <div 
-            key={`${x}-${y}`} 
-            data-type={isCityCell ? "city" : undefined}
-            className="relative flex items-center justify-center w-full h-full"
-          >
-            <Cell
-              cell={cell}
-              players={players}
-              isAvailableMove={checkAvailableMove(x, y)}
-              onMove={onMove}
-            />
-          </div>
-        );
-      })}
-
-      {/* Unentered Monks centered on border platforms */}
-      {unenteredMonks.map((p) => {
-        let posClass = "";
-        if (p.startCell.x === 0) {
-          posClass = "absolute left-[-40px] top-[43.75%] -translate-y-1/2 w-16 h-20 z-30"; // Left (Green)
-        } else if (p.startCell.x === 7) {
-          posClass = "absolute right-[-40px] top-[43.75%] -translate-y-1/2 w-16 h-20 z-30"; // Right (Blue)
-        } else if (p.startCell.y === 0) {
-          posClass = "absolute top-[-45px] left-[43.75%] -translate-x-1/2 w-16 h-20 z-30"; // Top (Yellow)
-        } else if (p.startCell.y === 7) {
-          posClass = "absolute bottom-[-45px] left-[43.75%] -translate-x-1/2 w-16 h-20 z-30"; // Bottom (Red)
-        }
-
-        if (!posClass) return null;
-
-        let imgName = 'monk_1.png';
-        if (p.id === 'player_2') imgName = 'monk_3.png'; // Blue (Right)
-        else if (p.id === 'player_3') imgName = 'monk_1.png'; // Yellow (Top) - random
-        else if (p.id === 'player_4') imgName = 'monk_2.png'; // Red (Bottom)
-
-        const isCurrentActive = p.id === activePlayerId && phase === 'MOVE';
-
-        return (
-          <div
-            key={p.id}
-            className={posClass}
-            style={{
-              filter: `drop-shadow(0 0 4px ${p.color}) drop-shadow(0 3px 4px rgba(0,0,0,0.6))`
-            }}
-          >
-            <div className={`relative w-full h-full flex flex-col items-center justify-end ${
-              isCurrentActive ? 'animate-drift' : ''
-            }`}>
-              <img
-                src={`/assets/${imgName}`}
-                alt="Монах"
-                className="w-full h-full object-contain pointer-events-none z-10"
-              />
-              <div
-                className="absolute bottom-[-1px] w-9 h-[5px] rounded-full z-0 opacity-80"
-                style={{ backgroundColor: p.color }}
+          return (
+            <div 
+              key={`${x}-${y}`} 
+              data-type={isCityCell ? "city" : undefined}
+              className="relative flex items-center justify-center w-full h-full"
+            >
+              <Cell
+                cell={cell}
+                players={players}
+                isAvailableMove={checkAvailableMove(x, y)}
+                onMove={onMove}
               />
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+
+        {/* Unentered Monks centered on border platforms */}
+        {unenteredMonks.map((p) => {
+          let posClass = "";
+          if (p.startCell.x === 0) {
+            posClass = "absolute left-[-26px] sm:left-[-40px] top-[50%] -translate-y-1/2 w-[11%] h-[16%] z-30"; // Left (Green)
+          } else if (p.startCell.x === 7) {
+            posClass = "absolute right-[-26px] sm:right-[-40px] top-[50%] -translate-y-1/2 w-[11%] h-[16%] z-30"; // Right (Blue)
+          } else if (p.startCell.y === 0) {
+            posClass = "absolute top-[-30px] sm:top-[-44px] left-[50%] -translate-x-1/2 w-[11%] h-[16%] z-30"; // Top (Yellow)
+          } else if (p.startCell.y === 7) {
+            posClass = "absolute bottom-[-30px] sm:bottom-[-44px] left-[50%] -translate-x-1/2 w-[11%] h-[16%] z-30"; // Bottom (Red)
+          }
+
+          if (!posClass) return null;
+
+          let imgName = 'monk_1.png';
+          if (p.id === 'player_2') imgName = 'monk_3.png';
+          else if (p.id === 'player_3') imgName = 'monk_1.png';
+          else if (p.id === 'player_4') imgName = 'monk_2.png';
+
+          const isCurrentActive = p.id === activePlayerId && phase === 'MOVE';
+
+          return (
+            <div
+              key={p.id}
+              className={posClass}
+              style={{
+                filter: `drop-shadow(0 0 10px ${p.color}) drop-shadow(0 5px 8px rgba(0,0,0,0.85))`
+              }}
+            >
+              <div className={`relative w-full h-full flex flex-col items-center justify-end ${
+                isCurrentActive ? 'animate-drift animate-pulse-ring' : ''
+              }`}>
+                <img
+                  src={asset(imgName)}
+                  alt="Монах"
+                  className={`w-full h-full object-contain pointer-events-none z-10 ${p.id === 'player_1' ? '-scale-x-100' : ''}`}
+                />
+                <div
+                  className="absolute bottom-[-2px] w-10 sm:w-12 h-[6px] sm:h-[8px] rounded-full z-0 opacity-90 blur-[1px]"
+                  style={{ backgroundColor: p.color }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

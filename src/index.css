@@ -32,8 +32,9 @@
 
 body {
   font-family: 'TriodPostnaja', serif;
-  background-color: #050404;
-  background-image: radial-gradient(circle, #120e0d 0%, #020101 100%);
+  background-color: #0c0806;
+  background-size: cover;
+  background-position: center;
   color: #eae5d9;
   min-height: 100vh;
   margin: 0;
@@ -42,125 +43,188 @@ body {
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #ecdcb7;
+  background: rgba(20, 13, 8, 0.6);
 }
 ::-webkit-scrollbar-thumb {
-  background: #3f5a2a;
-  border-radius: 4px;
+  background: #7c5a27;
+  border-radius: 3px;
+  border: 1px solid #9e7638;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2b3e1c;
+  background: #b88a44;
 }
 
-/* Parchment scroll styling */
-.parchment-bg {
-  background: radial-gradient(circle, #fdfbf7 0%, #eadaa7 100%);
-  border: 4px double #8b6508;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 0 50px rgba(139, 101, 8, 0.25);
-  color: #3d2508;
-}
-
-/* Chronicle Scroll effect */
-.chronicle-scroll {
-  background: linear-gradient(to bottom, #fdfbf7 5%, #eadaa7 15%, #f4e7be 85%, #dcbfa2 95%);
-  border-left: 3px solid #8b6508;
-  border-right: 3px solid #8b6508;
-  box-shadow: 
-    0 10px 25px rgba(0,0,0,0.35),
-    inset 0 12px 15px -10px rgba(90, 50, 10, 0.5), 
-    inset 0 -12px 15px -10px rgba(90, 50, 10, 0.5);
-  color: #3d2508;
+/* Atmospheric Tactile Tabletop Canvas */
+.tabletop-canvas {
+  background: radial-gradient(circle at center, rgba(30, 20, 12, 0.4) 0%, rgba(8, 5, 3, 0.85) 100%);
   position: relative;
 }
 
-/* Decorative wood frames with green accents */
-.wood-panel {
-  background-image: linear-gradient(135deg, #1b2613 0%, #0d1309 100%);
-  border: 3px solid #3f5a2a;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+/* Illuminated Map Canvas */
+.map-relic-frame {
+  background: linear-gradient(145deg, #2b1d0e 0%, #170f07 100%);
+  border: 4px solid #b88a44;
+  outline: 3px solid #3a2512;
+  outline-offset: -8px;
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.9),
+    0 0 40px rgba(184, 138, 68, 0.25),
+    inset 0 0 50px rgba(0, 0, 0, 0.8);
+  border-radius: 1.75rem;
 }
 
-.gold-glow {
-  box-shadow: 0 0 15px rgba(254, 240, 138, 0.6);
+/* Floating Glass/Parchment HUD */
+.hud-card {
+  background: linear-gradient(135deg, rgba(28, 20, 13, 0.92) 0%, rgba(16, 11, 7, 0.96) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(184, 138, 68, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+}
+
+.hud-card-active {
+  border-color: #fef08a;
+  box-shadow: 0 0 25px rgba(254, 240, 138, 0.35), 0 16px 40px rgba(0, 0, 0, 0.8);
+}
+
+/* Authentic Parchment Card */
+.parchment-codex {
+  background: radial-gradient(circle at center, #fdfaf2 0%, #f1e2ba 70%, #dfc591 100%);
+  border: 3px double #7c521b;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65), inset 0 0 40px rgba(124, 82, 27, 0.35);
+  color: #2b1704;
+  border-radius: 1.5rem;
+}
+
+/* Parchment background for gameplay area — фон с изображением и блюром */
+.gameplay-bg {
+  position: relative;
+  background-image:
+    radial-gradient(ellipse at center, rgba(253, 250, 242, 0.25) 0%, rgba(241, 226, 186, 0.1) 50%, transparent 100%),
+    linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55));
+}
+
+.gameplay-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--bg-desktop);
+  background-size: cover;
+  background-position: center;
+  filter: blur(6px);
+  z-index: -1;
+}
+
+@media (max-width: 767.9px) {
+  .gameplay-bg::before {
+    background-image: var(--bg-mobile);
+  }
+}
+
+/* Chronicle Scroll Drawer */
+.chronicle-drawer {
+  background: linear-gradient(to bottom, #fefcf8 0%, #f3e5be 15%, #ebd6a1 85%, #d6b485 100%);
+  border-left: 5px solid #5a370e;
+  border-right: 5px solid #5a370e;
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.6),
+    inset 0 16px 20px -10px rgba(70, 38, 7, 0.7), 
+    inset 0 -16px 20px -10px rgba(70, 38, 7, 0.7);
+  color: #2b1704;
+}
+
+/* Red-gold primary buttons */
+.btn-red-gold {
+  background: linear-gradient(to bottom, #d92b2b 0%, #991b1b 100%);
+  color: #fef08a;
+  border: 1px solid rgba(254, 240, 138, 0.45);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), 0 0 10px rgba(217, 43, 43, 0.3);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-red-gold:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #ef4444 0%, #b91c1c 100%);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(254, 240, 138, 0.4);
+}
+.btn-red-gold:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+.btn-red-gold:disabled {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+  cursor: not-allowed;
+}
+
+/* Green-gold secondary buttons */
+.btn-green-gold {
+  background: linear-gradient(to bottom, #43632c 0%, #223416 100%);
+  color: #fef08a;
+  border: 1px solid rgba(254, 240, 138, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-green-gold:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #547c37 0%, #2b3e1c 100%);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+}
+.btn-green-gold:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+.btn-green-gold:disabled {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+  cursor: not-allowed;
+}
+
+/* Tooltip styles */
+.tooltip-body {
+  @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3.5 py-2.5 rounded-xl
+         bg-stone-950/95 text-stone-100 text-xs whitespace-nowrap
+         shadow-2xl border border-amber-500/40 pointer-events-none z-50 backdrop-blur-md;
+  max-width: 17rem;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.4;
 }
 
 .text-oldrus {
   font-family: 'Monomakh Unicode', serif;
 }
 
-.text-evangelie {
-  font-family: 'EvangelieTT', serif;
-}
-
 .text-izvod {
   font-family: 'TriodPostnaja', serif;
 }
 
-/* Red-gold primary buttons matching StartScreen */
-.btn-red-gold {
-  background-color: #b91c1c;
-  color: #fef08a;
-  border: 1px solid rgba(254, 240, 138, 0.3);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-  transition: all 0.2s ease-in-out;
-}
-.btn-red-gold:hover:not(:disabled) {
-  background-color: #991b1b;
-  transform: scale(1.02);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
-}
-.btn-red-gold:active:not(:disabled) {
-  transform: scale(0.98);
-}
-.btn-red-gold:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* Green-gold secondary buttons for actions */
-.btn-green-gold {
-  background-color: #2b3e1c;
-  color: #fef08a;
-  border: 1px solid rgba(254, 240, 138, 0.2);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s ease-in-out;
-}
-.btn-green-gold:hover:not(:disabled) {
-  background-color: #1c2b12;
-  transform: scale(1.01);
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.4);
-}
-.btn-green-gold:active:not(:disabled) {
-  transform: scale(0.99);
-}
-.btn-green-gold:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* Tooltip base styles (used with Tooltip React component) */
-.tooltip-body {
-  @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg
-         bg-stone-950/95 text-stone-100 text-xs whitespace-nowrap
-         shadow-xl border border-stone-700 pointer-events-none z-50;
-  max-width: 16rem;
-  white-space: normal;
-  text-align: left;
-  line-height: 1.3;
-}
-
-/* Active monk gentle vertical drift animation */
+/* Floating drift animation */
 @keyframes drift {
   0%, 100% {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-6px);
+    transform: translateY(-7px);
   }
 }
 .animate-drift {
   animation: drift 2.5s ease-in-out infinite;
+}
+
+/* Pulse golden ring animation */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(254, 240, 138, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(254, 240, 138, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(254, 240, 138, 0);
+  }
+}
+.animate-pulse-ring {
+  animation: pulse-ring 2s infinite;
 }

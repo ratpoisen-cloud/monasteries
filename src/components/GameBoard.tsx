@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Tooltip } from './Tooltip';
+import { asset } from '../utils/paths';
 
 // MonkToken component matching the meeple mask design with dynamic coloration
 interface MonkTokenProps {
@@ -22,7 +23,7 @@ export const MonkToken: React.FC<MonkTokenProps> = ({ color }) => {
       
       {/* Sprite meeple mask */}
       <img 
-        src="/assets/monk-mask.png" 
+        src={asset('monk-mask.png')} 
         alt="Монах" 
         className="absolute inset-0 w-full h-full object-contain pointer-events-none z-10"
       />
@@ -72,7 +73,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   return (
     <div 
       className="relative w-full max-w-4xl aspect-square wood-panel rounded-3xl overflow-hidden select-none bg-cover bg-center shadow-2xl border-4 double border-amber-900/40"
-      style={{ backgroundImage: "url('/assets/high-res-map.jpg')" }}
+      style={{ backgroundImage: `url('${asset('high-res-map.jpg')}')` }}
     >
       {/* 8x8 Grid Layer */}
       <div className="absolute inset-0 grid grid-cols-8 grid-rows-8 p-2 gap-0.5">

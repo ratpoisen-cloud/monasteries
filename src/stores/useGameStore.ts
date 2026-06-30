@@ -661,17 +661,14 @@ export const useGameStore = create<GameState>((set, get) => ({
           })
         );
 
-        set({
+        set((st) => ({
           board: boardWithRetreat,
           players: {
-            ...players,
+            ...st.players,
             [activePlayerId]: { ...active, resources: newResources, hasEntered: false, prevCell: null },
           },
-          gameLog: [...get().gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}) и отступил назад.${resourceLog}`],
-          activeEventCard: null,
-          discardDeck: [...discardDeck, activeEventCard],
-        });
-
+          gameLog: [...st.gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}) и отступил назад.${resourceLog}`],
+        }));
         get().endTurn();
         return;
       }
@@ -685,17 +682,17 @@ export const useGameStore = create<GameState>((set, get) => ({
         })
       );
 
-      set({
+      set((st) => ({
         board: updatedBoard,
         players: {
-          ...players,
+          ...st.players,
           [activePlayerId]: { ...active, resources: newResources },
         },
-        gameLog: [...get().gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}).${resourceLog}`],
+        gameLog: [...st.gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}).${resourceLog}`],
         activeEventCard: null,
-        discardDeck: [...discardDeck, activeEventCard],
+        discardDeck: [...st.discardDeck, activeEventCard],
         phase: 'BUILD',
-      });
+      }));
     } else if (activeEventCard.actionType === 'get_helper') {
       const { type } = activeEventCard.actionPayload;
       set((state) => {
