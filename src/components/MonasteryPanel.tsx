@@ -245,6 +245,23 @@ export const MonasteryPanel: React.FC<MonasteryPanelProps> = ({
                         {p.helpers.bear && <img src={asset('bear.png')} alt="Медведь" className="w-4 h-5 object-cover rounded" />}Медведь
                       </span>
                     </div>
+                    {/* Relic cards (Desktop) */}
+                    {Object.values(p.relics).filter(Boolean).length > 0 && (
+                      <div>
+                        <h4 className="text-sm xl:text-base text-amber-950 text-oldrus mb-1.5 xl:mb-2 font-bold">Реликвии:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {(Object.entries(p.relics) as [string, string][]).filter(([, v]) => v).map(([building, relicType]) => (
+                            <div key={building} className="flex items-center gap-1.5 bg-gradient-to-br from-amber-100 to-amber-200 rounded-xl px-2.5 py-1.5 border border-amber-600/40 shadow-sm">
+                              <img src={asset(`${relicType}.png`)} alt={relicType === 'obraz' ? 'Образ' : 'Житие'} className="w-8 h-8 xl:w-10 xl:h-10 object-contain drop-shadow-md" />
+                              <div className="flex flex-col">
+                                <span className="text-[10px] xl:text-xs font-bold text-amber-950 text-oldrus">{relicType === 'obraz' ? 'Образ' : 'Житие'}</span>
+                                <span className="text-[8px] xl:text-[9px] text-amber-800 font-semibold">({getBuildingLabel(building)})</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div>
                       <h4 className="text-sm xl:text-base text-amber-950 text-oldrus mb-1.5 xl:mb-2 font-bold">Строительство обители:</h4>
                       <div className="grid grid-cols-3 xl:grid-cols-5 gap-1.5 xl:gap-2">
@@ -395,6 +412,19 @@ export const MonasteryPanel: React.FC<MonasteryPanelProps> = ({
                     {p.helpers.bear && <img src={asset('bear.png')} alt="" className="w-3 h-4 object-cover rounded" />}Медведь
                   </span>
                 </div>
+
+                {/* Relic cards (Mobile) */}
+                {Object.values(p.relics).filter(Boolean).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {(Object.entries(p.relics) as [string, string][]).filter(([, v]) => v).map(([building, relicType]) => (
+                      <div key={building} className="flex items-center gap-1 bg-gradient-to-br from-amber-100 to-amber-200 rounded-lg px-2 py-1 border border-amber-600/40 shadow-sm">
+                        <img src={asset(`${relicType}.png`)} alt={relicType === 'obraz' ? 'Образ' : 'Житие'} className="w-5 h-5 object-contain drop-shadow-md" />
+                        <span className="text-[8px] font-bold text-amber-950 text-oldrus">{relicType === 'obraz' ? 'Образ' : 'Житие'}</span>
+                        <span className="text-[7px] text-amber-800 font-semibold">({getBuildingLabel(building)})</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Action buttons */}
                 {isActive && (
