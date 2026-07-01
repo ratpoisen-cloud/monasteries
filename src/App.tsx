@@ -14,7 +14,6 @@ function App() {
     activePlayerId,
     board,
     phase,
-    turnNumber,
     diceRollResult,
     diceRolling,
     gameLog,
