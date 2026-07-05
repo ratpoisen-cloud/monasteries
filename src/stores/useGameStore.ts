@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { GamePhase, Cell, CellType, Player, LetopisCard, RelicType } from '../types/game';
 import { generateLetopisDeck } from '../utils/deckGenerator';
+import { getActivePlayerCell, getPlayerEntryCells } from '../utils/gameHelpers';
 
 const RELIC_SLOT_ORDER: (keyof Player['relics'])[] = ['cells', 'church', 'walls', 'belfry', 'cathedral'];
 
@@ -38,7 +39,7 @@ interface GameState {
   movePlayer: (x: number, y: number) => void;
   executeCellAction: (cell: Cell) => void;
   drawEventCard: () => void;
-  resolveEventWithBribe: (method: 'silver' | 'bread' | 'none') => void;
+  resolveEventWithBribe: (method: 'silver' | 'bread' | 'wax') => void;
   resolveEventWithHelper: (helper: 'warrior' | 'bear' | 'none') => void;
   resolveActiveEvent: () => void;
   buildStructure: (structure: 'cells' | 'church' | 'walls' | 'belfry' | 'cathedral') => void;
@@ -248,18 +249,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       const isAdjacent = (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
       if (!isAdjacent) return;
     } else {
-      // Player is entering the board. Must click one of their two entry cells (3 or 4 of their edge)
-      const order = get().playerOrder;
-      let isValidEntry = false;
-      if (activePlayerId === order[0]) { // Green (Left)
-        isValidEntry = (x === 0 && (y === 3 || y === 4));
-      } else if (activePlayerId === order[1]) { // Blue (Right)
-        isValidEntry = (x === 7 && (y === 3 || y === 4));
-      } else if (activePlayerId === order[2]) { // Yellow (Top)
-        isValidEntry = ((x === 3 || x === 4) && y === 0);
-      } else if (activePlayerId === order[3]) { // Red (Bottom)
-        isValidEntry = ((x === 3 || x === 4) && y === 7);
-      }
+      // Player is entering the board. Must click one of their entry cells
+      const entryCells = getPlayerEntryCells(activePlayer);
+      const isValidEntry = entryCells.some(c => c.x === x && c.y === y);
       if (!isValidEntry) return;
     }
 
@@ -291,9 +283,11 @@ export const useGameStore = create<GameState>((set, get) => ({
             set((state) => ({
               gameLog: [...state.gameLog, `Четное число (${roll})! Переправа через реку удалась.`],
             }));
-            const rb = board.map((row) =>
+            const state = get();
+            const freshCell = getActivePlayerCell(state.board.flat(), activePlayerId);
+            const rb = state.board.map((row) =>
               row.map((c) => {
-                if (c.x === currentCell!.x && c.y === currentCell!.y) {
+                if (freshCell && c.x === freshCell.x && c.y === freshCell.y) {
                   return { ...c, occupantId: null };
                 }
                 if (c.x === x && c.y === y) {
@@ -303,9 +297,9 @@ export const useGameStore = create<GameState>((set, get) => ({
               })
             );
             const rp = {
-              ...players,
+              ...state.players,
               [activePlayerId]: {
-                ...activePlayer,
+                ...state.players[activePlayerId],
                 hasEntered: true,
               },
             };
@@ -365,8 +359,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   executeCellAction: (cell: Cell) => {
-    const { activePlayerId, players } = get();
-    const p = players[activePlayerId];
+    const { activePlayerId } = get();
+    const p = get().players[activePlayerId];
 
     // Check cell type
     if (cell.type === 'empty') {
@@ -450,13 +444,15 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   resolveEventWithBribe: (method) => {
-    const { activePlayerId, activeEventCard, players } = get();
+    const { activePlayerId, activeEventCard } = get();
     if (!activeEventCard) return;
 
-    const p = players[activePlayerId];
+    const p = get().players[activePlayerId];
     const bribeOptions = activeEventCard.actionPayload?.bribeOptions as Record<string, number> | undefined;
     const cost = bribeOptions?.[method];
-    if (!cost || (p.resources as any)[method] < cost) return;
+    if (!cost) return;
+    const currentResource = p.resources[method as keyof typeof p.resources];
+    if (currentResource < cost) return;
 
     const resourceLabels: Record<string, string> = {
       silver: 'Серебра',
@@ -467,7 +463,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     set((state) => {
       const active = state.players[activePlayerId];
       const newResources = { ...active.resources };
-      (newResources as any)[method] -= cost;
+      if (method === 'silver') newResources.silver -= cost;
+      else if (method === 'bread') newResources.bread -= cost;
+      else if (method === 'wax') newResources.wax -= cost;
+      else return state;
       return {
         players: {
           ...state.players,
@@ -551,21 +550,15 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   resolveActiveEvent: () => {
-    const { activePlayerId, activeEventCard, players, board, discardDeck } = get();
+    const state = get();
+    const { activePlayerId, activeEventCard, discardDeck } = state;
     if (!activeEventCard) return;
 
-    const p = players[activePlayerId];
+    const p = state.players[activePlayerId];
 
-    // Find current cell coordinates of the active player
-    let curX = 0, curY = 0;
-    for (const row of board) {
-      const found = row.find((c) => c.occupantId === activePlayerId);
-      if (found) {
-        curX = found.x;
-        curY = found.y;
-        break;
-      }
-    }
+    const curCell = getActivePlayerCell(state.board.flat(), activePlayerId);
+    const curX = curCell?.x ?? 0;
+    const curY = curCell?.y ?? 0;
 
     if (activeEventCard.actionType === 'resource_gain') {
       const payload = activeEventCard.actionPayload;
@@ -629,7 +622,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const { type } = activeEventCard.actionPayload;
       const isPrivate = type === 'village' || type === 'saltworks';
 
-      const active = players[activePlayerId];
+      const active = state.players[activePlayerId];
       const newResources = { ...active.resources };
       let resourceLog = '';
       if (type === 'village') {
@@ -649,7 +642,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       // Windfall: retreat and immediately end turn (skip BUILD)
       if (type === 'windfall') {
         const prevCell = active.prevCell;
-        const boardWithRetreat = board.map((row) =>
+        const boardWithRetreat = state.board.map((row) =>
           row.map((c) => {
             if (prevCell && c.x === prevCell.x && c.y === prevCell.y) {
               return { ...c, occupantId: activePlayerId };
@@ -668,12 +661,14 @@ export const useGameStore = create<GameState>((set, get) => ({
             [activePlayerId]: { ...active, resources: newResources, hasEntered: false, prevCell: null },
           },
           gameLog: [...st.gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}) и отступил назад.${resourceLog}`],
+          activeEventCard: null,
+          discardDeck: [...st.discardDeck, activeEventCard],
         }));
         get().endTurn();
         return;
       }
 
-      const updatedBoard = board.map((row) =>
+      const updatedBoard = state.board.map((row) =>
         row.map((c) => {
           if (c.x === curX && c.y === curY) {
             return { ...c, type, ownerId: isPrivate ? activePlayerId : null };
@@ -946,19 +941,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   visitCityLocation: (location) => {
-    const { activePlayerId, players, board } = get();
-    const p = players[activePlayerId];
+    const { activePlayerId } = get();
+    const p = get().players[activePlayerId];
     const res = p.resources;
 
-    // Check if player figure is currently on the corresponding city cell
-    let curCell: Cell | null = null;
-    for (const row of board) {
-      const found = row.find((c) => c.occupantId === activePlayerId);
-      if (found) {
-        curCell = found;
-        break;
-      }
-    }
+    const curCell = getActivePlayerCell(get().board.flat(), activePlayerId);
 
     if (!curCell || curCell.type !== `city_${location}`) {
       set((state) => ({
@@ -1073,19 +1060,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   recruitMonkAttempt: () => {
-    const { activePlayerId, players, board } = get();
-    const p = players[activePlayerId];
+    const { activePlayerId } = get();
+    const p = get().players[activePlayerId];
     const res = p.resources;
 
-    // Must be at start cell (entrance)
-    let curCell: Cell | null = null;
-    for (const row of board) {
-      const found = row.find((c) => c.occupantId === activePlayerId);
-      if (found) {
-        curCell = found;
-        break;
-      }
-    }
+    const curCell = getActivePlayerCell(get().board.flat(), activePlayerId);
 
     if (!curCell || curCell.x !== p.startCell.x || curCell.y !== p.startCell.y) {
       set((state) => ({
@@ -1160,9 +1139,20 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   tradeResources: (ops) => {
-    const { activePlayerId, players } = get();
-    const p = players[activePlayerId];
+    const { activePlayerId } = get();
+    const p = get().players[activePlayerId];
     const res = p.resources;
+
+    const opsValid = Object.entries(ops).every(([k, v]) => {
+      if (k.startsWith('exchangeSaltTo')) return typeof v === 'number' && v >= 0;
+      return typeof v === 'number' && v >= 0;
+    });
+    if (!opsValid) {
+      set((state) => ({
+        gameLog: [...state.gameLog, 'Некорректные параметры торговли.'],
+      }));
+      return;
+    }
 
     let newSilver = res.silver;
     let newBread = res.bread;
@@ -1224,6 +1214,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (saltToW > 0 && newSalt >= saltToW) {
       newSalt -= saltToW;
       newWax += saltToW * 2;
+    }
+
+    if (newSilver < 0 || newBread < 0 || newWax < 0 || newSalt < 0) {
+      set((state) => ({
+        gameLog: [...state.gameLog, 'Недостаточно ресурсов для обмена!'],
+      }));
+      return;
     }
 
     set((state) => ({

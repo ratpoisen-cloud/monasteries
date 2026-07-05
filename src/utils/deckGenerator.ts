@@ -127,7 +127,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
     quoteSource: '— Слово о идолах, XII в.',
     description: 'Монах забрел в капище лесных язычников. Бросьте кубик: ЧЕТ — вы смогли убедить их словом, НЕЧЕТ — монах принесен в жертву. Дружинник или Медведь спасут вас автоматом (теряя помощника).',
     actionType: 'monk_death_check',
-    actionPayload: { threat: 'pagans', bribeOptions: { bread: 1, wax: 1 } },
+    actionPayload: { threat: 'pagans', bribeOptions: { bread: 1 } },
     requiresDiceRoll: true,
   },
   {
@@ -232,19 +232,17 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
 ];
 
 export function generateLetopisDeck(): LetopisCard[] {
-  const deck: LetopisCard[] = [];
-  let idCounter = 1;
-
-  // Генерируем 74 карты, повторяя шаблоны с небольшой рандомизацией
-  while (deck.length < 74) {
-    for (const template of CARD_TEMPLATES) {
-      if (deck.length >= 74) break;
-      deck.push({
-        ...template,
-        id: `card_${idCounter++}_${template.title.toLowerCase().replace(/\s+/g, '_')}`,
-      });
-    }
+  // Build explicit pool: repeat all templates 4 times, then slice to exactly 74
+  const DECK_POOL: Omit<LetopisCard, 'id'>[] = [];
+  for (let i = 0; i < 4; i++) {
+    DECK_POOL.push(...CARD_TEMPLATES);
   }
+
+  const selected = DECK_POOL.slice(0, 74);
+  const deck: LetopisCard[] = selected.map((template, index) => ({
+    ...template,
+    id: `card_${index + 1}_${template.title.toLowerCase().replace(/\s+/g, '_')}`,
+  }));
 
   // Перемешиваем колоду (Fisher-Yates)
   for (let i = deck.length - 1; i > 0; i--) {

@@ -9,7 +9,7 @@ interface EventModalProps {
   player: Player;
   diceRollResult: number | null;
   diceRolling: boolean;
-  onBribe: (method: 'silver' | 'bread') => void;
+  onBribe: (method: 'silver' | 'bread' | 'wax') => void;
   onUseHelper: (helper: 'warrior' | 'bear' | 'none') => void;
   onRollDice: () => void;
   onResolve: () => void;

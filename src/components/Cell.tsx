@@ -11,7 +11,7 @@ interface CellProps {
   onMove: (x: number, y: number) => void;
 }
 
-export const Cell: React.FC<CellProps> = ({
+const CellComponent: React.FC<CellProps> = ({
   cell,
   players,
   isAvailableMove,
@@ -236,3 +236,5 @@ export const Cell: React.FC<CellProps> = ({
     </Tooltip>
   );
 };
+
+export const Cell = React.memo(CellComponent);
