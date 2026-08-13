@@ -9,6 +9,14 @@ import {
 } from 'lucide-react';
 import { Tooltip } from './Tooltip';
 import { asset } from '../utils/paths';
+import {
+  BUILDING_COST_LABELS,
+  BUILDING_DESCRIPTIONS,
+  BUILDING_NAMES,
+  BUILDING_SEQ,
+  canAffordBuilding,
+  getNextBuilding,
+} from '../utils/rules';
 
 interface MonasteryPanelProps {
   players: Record<string, Player>;
@@ -48,59 +56,17 @@ export const MonasteryPanel: React.FC<MonasteryPanelProps> = ({
     }));
   };
 
-  const buildingSeq: ('cells' | 'church' | 'walls' | 'belfry' | 'cathedral')[] = [
-    'cells',
-    'church',
-    'walls',
-    'belfry',
-    'cathedral',
-  ];
+  const getBuildingLabel = (b: string) => BUILDING_NAMES[b as keyof typeof BUILDING_NAMES] || '';
 
-  const getBuildingLabel = (b: string) => {
-    switch (b) {
-      case 'cells': return 'Кельи';
-      case 'church': return 'Церковь';
-      case 'walls': return 'Стены';
-      case 'belfry': return 'Звонница';
-      case 'cathedral': return 'Собор';
-      default: return '';
-    }
-  };
+  const getBuildingDesc = (b: string) => BUILDING_DESCRIPTIONS[b as keyof typeof BUILDING_DESCRIPTIONS] || '';
 
-  const getBuildingDesc = (b: string) => {
-    switch (b) {
-      case 'cells': return 'Увеличивает вместимость братии. Можно нанять больше монахов.';
-      case 'church': return 'Духовный центр обители. Требует Благословения Епископа.';
-      case 'walls': return 'Крепкие стены защищают обитель от напастей.';
-      case 'belfry': return 'Звонница — гордость обители. Требует Артель мастеров.';
-      case 'cathedral': return 'Величественный Собор — венец строительства. Требует Артель и Благословение.';
-      default: return '';
-    }
-  };
-
-  const renderBuildingCost = (b: string) => {
-    switch (b) {
-      case 'cells': return '1 Молва, 1 Хлеб, 1 Монах';
-      case 'church': return '2 Молвы, 2 Хлеба, 1 Воск, Благословение, 2 Монаха';
-      case 'walls': return '3 Молвы, 3 Хлеба, 3 Монаха';
-      case 'belfry': return '4 Молвы, 4 Хлеба, Артель, 3 Монаха';
-      case 'cathedral': return '5 Молв, 5 Хлеба, 2 Воска, Артель, Благословение, 3 Монаха';
-      default: return '';
-    }
-  };
+  const renderBuildingCost = (b: string) => BUILDING_COST_LABELS[b as keyof typeof BUILDING_COST_LABELS] || '';
 
   const canBuild = (p: Player, structure: 'cells' | 'church' | 'walls' | 'belfry' | 'cathedral'): boolean => {
     if (p.id !== activePlayerId || phase !== 'BUILD') return false;
-    const nextB = buildingSeq.find((b) => !p.buildings[b]);
+    const nextB = getNextBuilding(p);
     if (nextB !== structure) return false;
-
-    const res = p.resources;
-    if (structure === 'cells') return res.molva >= 1 && res.bread >= 1 && p.monksCount >= 1;
-    if (structure === 'church') return res.molva >= 2 && res.bread >= 2 && res.wax >= 1 && p.tokens.blessing && p.monksCount >= 2;
-    if (structure === 'walls') return res.molva >= 3 && res.bread >= 3 && p.monksCount >= 3;
-    if (structure === 'belfry') return res.molva >= 4 && res.bread >= 4 && p.tokens.artel && p.monksCount >= 3;
-    if (structure === 'cathedral') return res.molva >= 5 && res.bread >= 5 && res.wax >= 2 && p.tokens.artel && p.tokens.blessing && p.monksCount >= 3;
-    return false;
+    return canAffordBuilding(p, structure);
   };
 
   const rawPlayerList = Object.values(players);
@@ -119,9 +85,9 @@ export const MonasteryPanel: React.FC<MonasteryPanelProps> = ({
           const buildingsCount = Object.values(p.buildings).filter(Boolean).length;
           const relicCount = Object.values(p.relics).filter(Boolean).length;
           const victoryPoints = buildingsCount + relicCount;
-          const nextBuilding = buildingSeq.find((b) => !p.buildings[b]);
+          const nextBuilding = getNextBuilding(p);
 
-          const lastBuilt = [...buildingSeq].reverse().find((b) => p.buildings[b]);
+          const lastBuilt = [...BUILDING_SEQ].reverse().find((b) => p.buildings[b]);
           const currentBuildingDisplay = lastBuilt || 'cells';
 
           return (
@@ -265,7 +231,7 @@ export const MonasteryPanel: React.FC<MonasteryPanelProps> = ({
                     <div>
                       <h4 className="text-sm xl:text-base text-amber-950 text-oldrus mb-1.5 xl:mb-2 font-bold">Строительство обители:</h4>
                       <div className="grid grid-cols-3 xl:grid-cols-5 gap-1.5 xl:gap-2">
-                        {buildingSeq.map((b) => {
+                        {BUILDING_SEQ.map((b) => {
                           const built = p.buildings[b];
                           const activeNext = nextBuilding === b;
                           const costMet = canBuild(p, b);
@@ -368,7 +334,7 @@ export const MonasteryPanel: React.FC<MonasteryPanelProps> = ({
 
                 {/* Buildings row */}
                 <div className="flex gap-1.5">
-                  {buildingSeq.map((b) => {
+                  {BUILDING_SEQ.map((b) => {
                     const built = p.buildings[b];
                     const activeNext = nextBuilding === b;
                     const costMet = canBuild(p, b);

@@ -1,6 +1,6 @@
-import type { LetopisCard } from '../types/game';
+import type { LetopisCard, LetopisCardTemplate } from '../types/game';
 
-const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
+const CARD_TEMPLATES: LetopisCardTemplate[] = [
   // 1. Добыча ресурсов
   {
     title: 'Обильный урожай',
@@ -233,7 +233,7 @@ const CARD_TEMPLATES: Omit<LetopisCard, 'id'>[] = [
 
 export function generateLetopisDeck(): LetopisCard[] {
   // Build explicit pool: repeat all templates 4 times, then slice to exactly 74
-  const DECK_POOL: Omit<LetopisCard, 'id'>[] = [];
+  const DECK_POOL: LetopisCardTemplate[] = [];
   for (let i = 0; i < 4; i++) {
     DECK_POOL.push(...CARD_TEMPLATES);
   }

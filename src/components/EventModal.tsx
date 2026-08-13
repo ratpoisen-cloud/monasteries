@@ -1,5 +1,5 @@
 import React from 'react';
-import type { LetopisCard, Player } from '../types/game';
+import type { LetopisCard, Player, ResourceKey } from '../types/game';
 import { Scroll, Coins, Wheat, Check } from 'lucide-react';
 import { Dice } from './Dice';
 import { asset } from '../utils/paths';
@@ -32,7 +32,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   const hasRolled = diceRollResult !== null;
   const rollIsOdd = hasRolled && diceRollResult % 2 !== 0;
   const rollIsEven = hasRolled && diceRollResult % 2 === 0;
-  const bribeOptions = card.actionPayload?.bribeOptions as Record<string, number> | undefined;
+  const bribeOptions = isDeathCheck ? card.actionPayload.bribeOptions : undefined;
 
   const showRollButton = isDeathCheck && !hasRolled && !diceRolling;
   const showDangerChoice = isDeathCheck && rollIsOdd;
@@ -175,8 +175,8 @@ export const EventModal: React.FC<EventModalProps> = ({
               {bribeOptions && (
                 <div className="grid grid-cols-2 gap-3">
                   {Object.entries(bribeOptions).map(([resource, cost]) => {
-                    const resKey = resource as keyof Player['resources'];
-                    const canPay = player.resources[resKey] >= cost;
+                    const resKey = resource as ResourceKey;
+                    const canPay = cost != null && player.resources[resKey] >= cost;
                     const labels: Record<string, string> = {
                       silver: 'Серебро',
                       bread: 'Хлеб',
@@ -185,7 +185,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                     return (
                       <button
                         key={resource}
-                        onClick={() => onBribe(resource as 'silver' | 'bread')}
+                        onClick={() => onBribe(resKey as 'silver' | 'bread' | 'wax')}
                         disabled={!canPay}
                         className={`py-3 px-2 rounded-2xl font-bold flex flex-col items-center justify-center gap-1.5 border text-xs transition-all shadow ${
                           canPay

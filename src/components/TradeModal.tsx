@@ -40,6 +40,8 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   const saltUsed = sellSalt + saltToBread + saltToWax;
   const saltOk = saltUsed <= player.resources.salt;
   const netOk = netSilver >= 0 && saltOk;
+  const breadRemainder = sellBread % 3 !== 0;
+  const waxRemainder = sellWax % 2 !== 0;
 
   const handleConfirm = () => {
     if (!netOk) return;
@@ -171,6 +173,16 @@ export const TradeModal: React.FC<TradeModalProps> = ({
         }`}>
           <span>Баланс серебра: {netSilver}</span>
           <span>Соли задействовано: {saltUsed} / {player.resources.salt}</span>
+          {breadRemainder && (
+            <span className="text-xs font-semibold text-amber-800">
+              Остаток Хлеба ({sellBread % 3} ед.) не обменивается на Серебро.
+            </span>
+          )}
+          {waxRemainder && (
+            <span className="text-xs font-semibold text-amber-800">
+              Остаток Воска ({sellWax % 2} ед.) не обменивается на Серебро.
+            </span>
+          )}
           {!netOk && (
             <span className="text-xs font-semibold text-red-800">
               Недостаточно ресурсов для обмена!

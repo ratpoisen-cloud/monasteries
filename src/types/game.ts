@@ -21,6 +21,8 @@ export interface Resources {
   wax: number;
 }
 
+export type ResourceKey = keyof Resources;
+
 export interface Buildings {
   cells: boolean;
   church: boolean;
@@ -28,6 +30,8 @@ export interface Buildings {
   belfry: boolean;
   cathedral: boolean;
 }
+
+export type Building = keyof Buildings;
 
 export interface Tokens {
   blessing: boolean;
@@ -71,20 +75,47 @@ export interface Cell {
   occupantId?: string | null; // ID игрока, чья фишка стоит на клетке
 }
 
-export interface LetopisCard {
+export type PlaceTokenType = 'village' | 'saltworks' | 'fortress' | 'river' | 'windfall';
+export type HelperType = 'warrior' | 'bear';
+
+export type LetopisCardAction =
+  | {
+      actionType: 'resource_gain';
+      actionPayload: Partial<Resources>;
+    }
+  | {
+      actionType: 'resource_loss';
+      actionPayload: Partial<Resources> & { fallback?: ResourceKey };
+    }
+  | {
+      actionType: 'place_token';
+      actionPayload: { type: PlaceTokenType };
+    }
+  | {
+      actionType: 'monk_death_check'; // проверка на смерть монаха (требует броска кубика)
+      actionPayload: { threat: string; bribeOptions?: Partial<Record<ResourceKey, number>> };
+    }
+  | {
+      actionType: 'get_helper';
+      actionPayload: { type: HelperType };
+    }
+  | {
+      actionType: 'wildcard'; // Другие кастомные эффекты
+      actionPayload: { type: 'obraz' };
+    }
+  | {
+      actionType: 'building_destruction'; // Разрушение здания
+      actionPayload: { destroy: 'building'; playerChoice: true };
+    };
+
+export interface LetopisCardBase {
   id: string;
   title: string;
   quote?: string; // Старославянская цитата
   quoteSource?: string; // Источник цитаты (например, «Повесть временных лет»)
   description: string;
-  actionType:
-    | 'resource_gain'
-    | 'resource_loss'
-    | 'place_token'
-    | 'monk_death_check' // проверка на смерть монаха (требует броска кубика)
-    | 'get_helper'
-    | 'wildcard' // Другие кастомные эффекты
-    | 'building_destruction'; // Разрушение здания
-  actionPayload: any;
   requiresDiceRoll?: boolean;
 }
+
+export type LetopisCard = LetopisCardBase & LetopisCardAction;
+export type LetopisCardTemplate = Omit<LetopisCardBase, 'id'> & LetopisCardAction;

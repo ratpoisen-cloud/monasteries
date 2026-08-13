@@ -6,6 +6,7 @@ import { EventModal } from './components/EventModal';
 import { TradeModal } from './components/TradeModal';
 import { Scroll, Award, RotateCcw, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { BUILDING_NAMES, BUILDING_SEQ } from './utils/rules';
 
 function App() {
   const {
@@ -37,18 +38,12 @@ function App() {
     performCellResourceAction,
     skipCellResourceAction,
     destroyBuilding,
+    skipEntryMove,
     endTurn,
   } = useGameStore();
 
   const [playerCount, setPlayerCount] = useState<number>(2);
-  const buildingNames: Record<string, string> = {
-    cells: 'Кельи',
-    church: 'Церковь',
-    walls: 'Стены',
-    belfry: 'Звонницу',
-    cathedral: 'Собор',
-  };
-  const buildOrder = ['cells', 'church', 'walls', 'belfry', 'cathedral'] as const;
+  const buildOrder = BUILDING_SEQ;
   const [loading, setLoading] = useState<boolean>(false);
 
   // Show confetti when game is over
@@ -329,7 +324,7 @@ function App() {
                     onClick={() => destroyBuilding(key)}
                     className="w-full py-3 btn-red-gold rounded-xl font-bold text-sm transition-all cursor-pointer text-oldrus tracking-wider flex items-center justify-center gap-2"
                   >
-                    <span>{buildingNames[key]}</span>
+                    <span>{BUILDING_NAMES[key]}</span>
                     {relic && (
                       <span className="text-xs bg-red-950/40 px-2 py-0.5 rounded-full border border-red-700/50">
                         {relic === 'obraz' ? 'Образ' : 'Житие'} 🔥
@@ -381,6 +376,7 @@ function App() {
                 activePlayerId={activePlayerId}
                 phase={phase}
                 onMove={movePlayer}
+                onSkipEntryMove={skipEntryMove}
               />
             </div>
           </div>
@@ -442,6 +438,7 @@ function App() {
               activePlayerId={activePlayerId}
               phase={phase}
               onMove={movePlayer}
+              onSkipEntryMove={skipEntryMove}
             />
           </div>
 

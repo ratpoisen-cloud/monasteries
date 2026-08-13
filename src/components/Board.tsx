@@ -2,6 +2,7 @@ import React from 'react';
 import type { Cell as CellType, Player } from '../types/game';
 import { Cell } from './Cell';
 import { asset } from '../utils/paths';
+import { findPlayerCell, getPlayerEntryCells, isAdjacentStep } from '../utils/rules';
 
 interface BoardProps {
   board: CellType[][];
@@ -9,6 +10,7 @@ interface BoardProps {
   activePlayerId: string;
   phase: string;
   onMove: (x: number, y: number) => void;
+  onSkipEntryMove?: () => void;
 }
 
 export const Board: React.FC<BoardProps> = ({
@@ -17,16 +19,10 @@ export const Board: React.FC<BoardProps> = ({
   activePlayerId,
   phase,
   onMove,
+  onSkipEntryMove,
 }) => {
   // Find current position of active player
-  let activePlayerCell: CellType | null = null;
-  for (const row of board) {
-    const found = row.find((c) => c.occupantId === activePlayerId);
-    if (found) {
-      activePlayerCell = found;
-      break;
-    }
-  }
+  const activePlayerCell = findPlayerCell(board, activePlayerId);
 
   const checkAvailableMove = (x: number, y: number): boolean => {
     if (phase !== 'MOVE') return false;
@@ -36,17 +32,8 @@ export const Board: React.FC<BoardProps> = ({
 
     const hasEntered = activePlayer.hasEntered ?? false;
     if (!hasEntered) {
-      // Must step on either cell 3 or cell 4 on their start edge
-      if (activePlayer.startCell.x === 0) { // Left (Green)
-        return x === 0 && (y === 3 || y === 4);
-      } else if (activePlayer.startCell.x === 7) { // Right (Blue)
-        return x === 7 && (y === 3 || y === 4);
-      } else if (activePlayer.startCell.y === 0) { // Top (Yellow)
-        return (x === 3 || x === 4) && y === 0;
-      } else if (activePlayer.startCell.y === 7) { // Bottom (Red)
-        return (x === 3 || x === 4) && y === 7;
-      }
-      return false;
+      // Must step on one of the entry cells on their start edge
+      return getPlayerEntryCells(activePlayer).some((c) => c.x === x && c.y === y);
     }
 
     if (!activePlayerCell) return false;
@@ -57,13 +44,16 @@ export const Board: React.FC<BoardProps> = ({
     if (targetCell.occupantId && targetCell.occupantId !== activePlayerId) return false;
     if (targetCell.type === 'windfall') return false;
 
-    const dx = Math.abs(activePlayerCell.x - x);
-    const dy = Math.abs(activePlayerCell.y - y);
+    // Cannot stay on the same cell two turns in a row
+    if (activePlayerCell.x === x && activePlayerCell.y === y) return false;
+
     // Adjacent orthogonal step
-    return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
+    return isAdjacentStep(activePlayerCell, { x, y });
   };
 
   const unenteredMonks = Object.values(players).filter((p) => !p.hasEntered);
+  const activePlayer = players[activePlayerId];
+  const canStayAtGates = phase === 'MOVE' && !!activePlayer && !activePlayer.hasEntered;
 
   return (
     <div className="relative w-full aspect-square flex items-center justify-center select-none shadow-2xl transition-all duration-300"
@@ -78,6 +68,15 @@ export const Board: React.FC<BoardProps> = ({
           backgroundRepeat: 'no-repeat'
         }}
       >
+        {/* Stay-at-gates option for a player who has not yet entered the board */}
+        {canStayAtGates && onSkipEntryMove && (
+          <button
+            onClick={onSkipEntryMove}
+            className="absolute -top-8 sm:-top-10 left-1/2 -translate-x-1/2 z-40 px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl bg-amber-950/90 text-amber-100 border border-amber-500/60 hover:bg-amber-900 shadow-xl text-[11px] sm:text-sm font-bold text-oldrus tracking-wider transition-all cursor-pointer animate-pulse"
+          >
+            Остаться у врат
+          </button>
+        )}
         {/* 8x8 Grid Cells */}
         {board.flat().map((cell) => {
           const x = cell.x;
