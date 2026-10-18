@@ -116,7 +116,7 @@ const CARD_TEMPLATES: LetopisCardTemplate[] = [
     title: 'Набег кочевников',
     quote: '«Придоша бо погании степные люди...»',
     quoteSource: '— «Повесть временных лет», 1093 г.',
-    description: 'Свирепые степняки рыщут по округе. Бросьте кубик: ЧЕТ — вы спаслись, НЕЧЕТ — монах погибает. Дружинник или Медведь защитят вас автоматически (помощник при этом теряется).',
+    description: 'Свирепые степняки рыщут по округе. Бросьте кубик: ЧЕТ — вы спаслись, НЕЧЕТ — монах погибает. При нечете можно откупиться 1 Серебром или 1 Хлебом, пожертвовать Дружинником или Медведем (помощник теряется) либо принять гибель — она принесёт Житие (+1 ПО).',
     actionType: 'monk_death_check',
     actionPayload: { threat: 'nomads', bribeOptions: { silver: 1, bread: 1 } },
     requiresDiceRoll: true,
@@ -125,7 +125,7 @@ const CARD_TEMPLATES: LetopisCardTemplate[] = [
     title: 'Лесные язычники',
     quote: '«И поклоняхуся бесом во кумирех лесных...»',
     quoteSource: '— Слово о идолах, XII в.',
-    description: 'Монах забрел в капище лесных язычников. Бросьте кубик: ЧЕТ — вы смогли убедить их словом, НЕЧЕТ — монах принесен в жертву. Дружинник или Медведь спасут вас автоматом (теряя помощника).',
+    description: 'Монах забрел в капище лесных язычников. Бросьте кубик: ЧЕТ — вы смогли убедить их словом, НЕЧЕТ — монах принесен в жертву. При нечете можно откупиться 1 Хлебом, пожертвовать Дружинником или Медведем (помощник теряется) либо принять гибель — она принесёт Житие (+1 ПО).',
     actionType: 'monk_death_check',
     actionPayload: { threat: 'pagans', bribeOptions: { bread: 1 } },
     requiresDiceRoll: true,
@@ -134,7 +134,7 @@ const CARD_TEMPLATES: LetopisCardTemplate[] = [
     title: 'Разбойничья ватага',
     quote: '«И одолеша разбойницы на путех...»',
     quoteSource: '— Радзивилловская летопись',
-    description: 'Лесные грабители перекрыли дорогу. Вы можете откупиться 1 Серебром или 2 Хлеба. Иначе бросьте кубик: ЧЕТ — пронесло, НЕЧЕТ — монах погибает. Дружинник или Медведь спасут вас автоматом.',
+    description: 'Лесные грабители перекрыли дорогу. Бросьте кубик: ЧЕТ — пронесло, НЕЧЕТ — монах погибает. При нечете можно откупиться 1 Серебром или 2 Хлеба, пожертвовать Дружинником или Медведем (помощник теряется) либо принять гибель. Житие за гибель от разбойников не даётся.',
     actionType: 'monk_death_check',
     actionPayload: { threat: 'bandits', bribeOptions: { silver: 1, bread: 2 } },
     requiresDiceRoll: true,
@@ -232,13 +232,26 @@ const CARD_TEMPLATES: LetopisCardTemplate[] = [
 ];
 
 export function generateLetopisDeck(): LetopisCard[] {
-  // Build explicit pool: repeat all templates 4 times, then slice to exactly 74
-  const DECK_POOL: LetopisCardTemplate[] = [];
-  for (let i = 0; i < 4; i++) {
-    DECK_POOL.push(...CARD_TEMPLATES);
+  // 74 карты из 26 шаблонов: каждому шаблону гарантированно 2 копии (52 карты),
+  // ещё 22 карты достаются случайным 22 шаблонам — у них будет по 3 копии.
+  // Какие 4 шаблона останутся с двумя копиями, решает случай: иначе распределение
+  // всегда смещено в пользу первых шаблонов списка (в исходной версии «Великий пожар»
+  // выпадал в 1,5 раза чаще «Чудесного исцеления», а карт в колоде всё равно 74).
+  const shuffledTemplates = [...CARD_TEMPLATES];
+  for (let i = shuffledTemplates.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledTemplates[i], shuffledTemplates[j]] = [shuffledTemplates[j], shuffledTemplates[i]];
   }
 
-  const selected = DECK_POOL.slice(0, 74);
+  const DECK_POOL: LetopisCardTemplate[] = [];
+  for (const template of shuffledTemplates) {
+    DECK_POOL.push(template, template);
+  }
+  for (const template of shuffledTemplates.slice(0, 74 - DECK_POOL.length)) {
+    DECK_POOL.push(template);
+  }
+
+  const selected = DECK_POOL;
   const deck: LetopisCard[] = selected.map((template, index) => ({
     ...template,
     id: `card_${index + 1}_${template.title.toLowerCase().replace(/\s+/g, '_')}`,

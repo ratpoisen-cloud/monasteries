@@ -29,6 +29,10 @@ export const EventModal: React.FC<EventModalProps> = ({
 
   const hasHelpers = player.helpers.warrior || player.helpers.bear;
   const isDeathCheck = card.actionType === 'monk_death_check';
+  // Река выставляется на выбранную игроком свободную клетку (rules.md:46)
+  const isRiverPlacement = card.actionType === 'place_token' && card.actionPayload.type === 'river';
+  // Житие даётся только за гибель от кочевников и язычников (rules.md:89)
+  const deathGrantsZhitie = isDeathCheck && ['nomads', 'pagans'].includes(card.actionPayload.threat);
   const hasRolled = diceRollResult !== null;
   const rollIsOdd = hasRolled && diceRollResult % 2 !== 0;
   const rollIsEven = hasRolled && diceRollResult % 2 === 0;
@@ -115,8 +119,8 @@ export const EventModal: React.FC<EventModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none">
-      <div className="parchment-codex max-w-lg w-full p-8 sm:p-10 flex flex-col gap-5 shadow-2xl relative items-center justify-center border-4 double border-amber-900/80 rounded-3xl animate-scale-in text-center">
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center overflow-y-auto p-4 select-none">
+      <div className="parchment-codex max-h-[90dvh] overflow-y-auto max-w-lg w-full p-8 sm:p-10 flex flex-col gap-5 shadow-2xl relative items-center justify-center border-4 border-double border-amber-900/80 rounded-3xl animate-scale-in text-center">
         <div className="absolute top-3 left-3 right-3 bottom-3 border border-amber-900/20 pointer-events-none rounded-2xl" />
 
         {/* Illuminated Relic Graphic */}
@@ -130,7 +134,10 @@ export const EventModal: React.FC<EventModalProps> = ({
 
         {card.quote && (
           <div className="border-y border-amber-900/20 py-3 w-full flex flex-col gap-1 items-center">
-            <p className="text-base italic text-amber-900/90 font-medium leading-relaxed">
+            <p
+              className="text-base italic text-amber-900/90 font-medium leading-relaxed"
+              style={{ fontFamily: "'EvangelieTT', 'TriodPostnaja', serif" }}
+            >
               {card.quote}
             </p>
             {card.quoteSource && (
@@ -227,9 +234,9 @@ export const EventModal: React.FC<EventModalProps> = ({
 
               <button
                 onClick={() => onUseHelper('none')}
-                className="w-full py-3 bg-gradient-to-r from-red-900 to-red-950 text-red-100 hover:from-red-850 hover:to-red-900 rounded-2xl font-bold transition-all text-xs border border-red-700/50 shadow cursor-pointer"
+                className="w-full py-3 bg-gradient-to-r from-red-900 to-red-950 text-red-100 hover:from-red-800 hover:to-red-900 rounded-2xl font-bold transition-all text-xs border border-red-700/50 shadow cursor-pointer"
               >
-                Принять гибель Монаха (+1 ПО «Житие»)
+                Принять гибель Монаха{deathGrantsZhitie ? ' (+1 ПО «Житие»)' : ' (без Жития)'}
               </button>
             </div>
           )}
@@ -241,7 +248,7 @@ export const EventModal: React.FC<EventModalProps> = ({
               className="w-full py-3.5 btn-red-gold font-bold rounded-2xl text-base flex items-center justify-center gap-2 cursor-pointer text-oldrus tracking-widest shadow-xl"
             >
               <Check size={20} />
-              <span>Принять летопись</span>
+              <span>{isRiverPlacement ? 'Выбрать клетку для Реки' : 'Принять летопись'}</span>
             </button>
           )}
         </div>

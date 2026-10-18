@@ -11,6 +11,9 @@ interface BoardProps {
   phase: string;
   onMove: (x: number, y: number) => void;
   onSkipEntryMove?: () => void;
+  /** Жетон, который игрок сейчас выбирает на поле (Река) */
+  pendingTokenPlacement?: string | null;
+  onPlaceToken?: (x: number, y: number) => void;
 }
 
 export const Board: React.FC<BoardProps> = ({
@@ -20,11 +23,17 @@ export const Board: React.FC<BoardProps> = ({
   phase,
   onMove,
   onSkipEntryMove,
+  pendingTokenPlacement,
+  onPlaceToken,
 }) => {
   // Find current position of active player
   const activePlayerCell = findPlayerCell(board, activePlayerId);
+  const placing = !!pendingTokenPlacement;
 
   const checkAvailableMove = (x: number, y: number): boolean => {
+    // Режим выставления жетона: подсвечиваем свободные клетки поля.
+    if (placing) return board[y]?.[x]?.type === 'empty';
+
     if (phase !== 'MOVE') return false;
 
     const activePlayer = players[activePlayerId];
@@ -77,6 +86,12 @@ export const Board: React.FC<BoardProps> = ({
             Остаться у врат
           </button>
         )}
+        {/* River placement hint */}
+        {placing && (
+          <div className="absolute -top-8 sm:-top-10 left-1/2 -translate-x-1/2 z-40 px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl bg-sky-950/95 text-sky-100 border border-sky-400/60 shadow-xl text-[11px] sm:text-sm font-bold text-oldrus tracking-wider text-center whitespace-nowrap">
+            Выберите свободную клетку для жетона «Река»
+          </div>
+        )}
         {/* 8x8 Grid Cells */}
         {board.flat().map((cell) => {
           const x = cell.x;
@@ -93,7 +108,7 @@ export const Board: React.FC<BoardProps> = ({
                 cell={cell}
                 players={players}
                 isAvailableMove={checkAvailableMove(x, y)}
-                onMove={onMove}
+                onMove={placing && onPlaceToken ? onPlaceToken : onMove}
               />
             </div>
           );

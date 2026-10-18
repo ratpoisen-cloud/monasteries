@@ -31,6 +31,8 @@ interface MonasteryPanelProps {
   onSkipCellAction: () => void;
   currentCellType: string;
   filterPlayerIds?: string[];
+  /** В этом ходу уже была попытка пострига — второй бросок правилами не разрешён */
+  recruitRolled?: boolean;
 }
 
 export const MonasteryPanel: React.FC<MonasteryPanelProps> = ({
@@ -46,6 +48,7 @@ export const MonasteryPanel: React.FC<MonasteryPanelProps> = ({
   onSkipCellAction,
   currentCellType,
   filterPlayerIds,
+  recruitRolled = false,
 }) => {
   const [expandedPlayerIds, setExpandedPlayerIds] = useState<Record<string, boolean>>({});
 
@@ -274,20 +277,29 @@ export const MonasteryPanel: React.FC<MonasteryPanelProps> = ({
                       {isActive && (
                         <div className="flex flex-wrap gap-2 items-center justify-end">
                           {p.monksCount < 3 && (
-                            <button onClick={onRecruitMonk} className="px-3 xl:px-4 py-2 xl:py-2.5 bg-gradient-to-r from-indigo-900 to-indigo-950 text-indigo-100 border border-indigo-400/60 hover:from-indigo-850 hover:to-indigo-900 rounded-xl text-[10px] xl:text-xs font-bold transition-all flex items-center gap-1 xl:gap-1.5 shadow-lg cursor-pointer">
-                              <PlusCircle size={14} /><span>Постриг монаха</span>
+                            <button
+                              onClick={onRecruitMonk}
+                              disabled={recruitRolled}
+                              title={recruitRolled ? 'За один ход даётся только одна попытка броска кубика' : '3 Молвы + 1 Хлеб, чёт = новый монах'}
+                              className={`px-3 xl:px-4 py-2 xl:py-2.5 border rounded-xl text-[10px] xl:text-xs font-bold transition-all flex items-center gap-1 xl:gap-1.5 shadow-lg ${
+                                recruitRolled
+                                  ? 'bg-stone-300 text-stone-500 border-stone-400 cursor-not-allowed'
+                                  : 'bg-gradient-to-r from-indigo-900 to-indigo-950 text-indigo-100 border-indigo-400/60 hover:from-indigo-800 hover:to-indigo-900 cursor-pointer'
+                              }`}
+                            >
+                              <PlusCircle size={14} /><span>{recruitRolled ? 'Постриг (был)' : 'Постриг монаха'}</span>
                             </button>
                           )}
                           {currentCellType.startsWith('city_') && phase === 'EVENT_ACTION' && (
                             <>
                               <button onClick={() => onVisitCity(currentCellType.replace('city_', '') as any)} className="px-4 py-2 xl:px-5 xl:py-2.5 btn-red-gold rounded-xl text-[10px] xl:text-xs font-bold transition-all cursor-pointer text-oldrus tracking-wider shadow-lg">Выполнить действие</button>
-                              <button onClick={onSkipLocation} className="px-3 xl:px-4 py-2 xl:py-2.5 bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-750 rounded-xl text-[10px] xl:text-xs font-semibold transition-all cursor-pointer">Пропустить</button>
+                              <button onClick={onSkipLocation} className="px-3 xl:px-4 py-2 xl:py-2.5 bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-700 rounded-xl text-[10px] xl:text-xs font-semibold transition-all cursor-pointer">Пропустить</button>
                             </>
                           )}
                           {phase === 'EVENT_ACTION' && (currentCellType === 'village' || currentCellType === 'saltworks') && (
                             <>
                               <button onClick={() => onPerformCellAction(currentCellType as 'village' | 'saltworks')} className="px-4 py-2 xl:px-5 xl:py-2.5 btn-green-gold rounded-xl text-[10px] xl:text-xs font-bold transition-all cursor-pointer shadow-lg">{currentCellType === 'village' ? 'Собрать урожай' : 'Добыть соль'}</button>
-                              <button onClick={onSkipCellAction} className="px-3 xl:px-4 py-2 xl:py-2.5 bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-750 rounded-xl text-[10px] xl:text-xs font-semibold transition-all cursor-pointer">Пропустить</button>
+                              <button onClick={onSkipCellAction} className="px-3 xl:px-4 py-2 xl:py-2.5 bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-700 rounded-xl text-[10px] xl:text-xs font-semibold transition-all cursor-pointer">Пропустить</button>
                             </>
                           )}
                           {phase === 'BUILD' && (
@@ -396,20 +408,28 @@ export const MonasteryPanel: React.FC<MonasteryPanelProps> = ({
                 {isActive && (
                   <div className="flex flex-wrap gap-2 pt-1 border-t border-amber-900/20">
                     {p.monksCount < 3 && (
-                      <button onClick={onRecruitMonk} className="flex-1 min-w-[100px] py-2.5 bg-gradient-to-r from-indigo-900 to-indigo-950 text-indigo-100 border border-indigo-400/60 hover:from-indigo-850 hover:to-indigo-900 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow cursor-pointer">
-                        <PlusCircle size={14} /><span>Постриг</span>
+                      <button
+                        onClick={onRecruitMonk}
+                        disabled={recruitRolled}
+                        className={`flex-1 min-w-[100px] py-2.5 border rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow ${
+                          recruitRolled
+                            ? 'bg-stone-300 text-stone-500 border-stone-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-indigo-900 to-indigo-950 text-indigo-100 border-indigo-400/60 hover:from-indigo-800 hover:to-indigo-900 cursor-pointer'
+                        }`}
+                      >
+                        <PlusCircle size={14} /><span>{recruitRolled ? 'Постриг (был)' : 'Постриг'}</span>
                       </button>
                     )}
                     {currentCellType.startsWith('city_') && phase === 'EVENT_ACTION' && (
                       <>
                         <button onClick={() => onVisitCity(currentCellType.replace('city_', '') as any)} className="flex-1 min-w-[100px] py-2.5 btn-red-gold rounded-xl text-xs font-bold transition-all cursor-pointer text-oldrus tracking-wider shadow">Выполнить</button>
-                        <button onClick={onSkipLocation} className="flex-1 min-w-[80px] py-2.5 bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-750 rounded-xl text-xs font-semibold transition-all cursor-pointer">Пропустить</button>
+                        <button onClick={onSkipLocation} className="flex-1 min-w-[80px] py-2.5 bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-700 rounded-xl text-xs font-semibold transition-all cursor-pointer">Пропустить</button>
                       </>
                     )}
                     {phase === 'EVENT_ACTION' && (currentCellType === 'village' || currentCellType === 'saltworks') && (
                       <>
                         <button onClick={() => onPerformCellAction(currentCellType as 'village' | 'saltworks')} className="flex-1 min-w-[100px] py-2.5 btn-green-gold rounded-xl text-xs font-bold transition-all cursor-pointer shadow">{currentCellType === 'village' ? 'Урожай' : 'Добыча'}</button>
-                        <button onClick={onSkipCellAction} className="flex-1 min-w-[80px] py-2.5 bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-750 rounded-xl text-xs font-semibold transition-all cursor-pointer">Пропустить</button>
+                        <button onClick={onSkipCellAction} className="flex-1 min-w-[80px] py-2.5 bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-700 rounded-xl text-xs font-semibold transition-all cursor-pointer">Пропустить</button>
                       </>
                     )}
                     {phase === 'BUILD' && (

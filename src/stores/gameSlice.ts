@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
-import type { Cell, CellType, GamePhase, LetopisCard, Player, RelicType } from '../types/game';
+import type { Cell, CellType, GamePhase, LetopisCard, PlaceTokenType, Player, RelicType } from '../types/game';
 import { generateLetopisDeck } from '../utils/deckGenerator';
-import { applyBuildingCost, BUILDING_NAMES_ACC, BUILDING_SEQ, findPlayerCell, getPlayerEntryCells, isAdjacentStep } from '../utils/rules';
+import { applyBuildingCost, BUILDING_NAMES_ACC, findPlayerCell, getNextBuilding, getPlayerEntryCells, isAdjacentStep } from '../utils/rules';
 import type { UiSlice } from './uiSlice';
 
 const RELIC_SLOT_ORDER: (keyof Player['relics'])[] = ['cells', 'church', 'walls', 'belfry', 'cathedral'];
@@ -27,6 +27,12 @@ export interface GameSlice {
   discardDeck: LetopisCard[];
   activeEventCard: LetopisCard | null;
   hasBuiltThisTurn: boolean;
+  /** Сыграна ли уже попытка пострига в этом ходу (правила: одна попытка броска за ход) */
+  recruitRolledThisTurn: boolean;
+  /** Жетон, который игрок сейчас выставляет на выбранную клетку (Река — rules.md:46) */
+  pendingTokenPlacement: PlaceTokenType | null;
+  /** Карта, ожидающая выставления жетона (уйдёт в сброс после выбора клетки) */
+  pendingCard: LetopisCard | null;
 
   // Actions
   initGame: (playerCount: number) => void;
@@ -55,6 +61,7 @@ export interface GameSlice {
   performCellResourceAction: (cellType: 'village' | 'saltworks') => void;
   skipCellResourceAction: () => void;
   destroyBuilding: (structure: keyof Player['buildings']) => void;
+  placePendingToken: (x: number, y: number) => void;
   skipEntryMove: () => void;
   endTurn: () => void;
 }
@@ -90,6 +97,9 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
   discardDeck: [],
   activeEventCard: null,
   hasBuiltThisTurn: false,
+  recruitRolledThisTurn: false,
+  pendingTokenPlacement: null,
+  pendingCard: null,
 
   initGame: (playerCount) => {
     const order: string[] = [];
@@ -171,11 +181,18 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
       phase: 'INCOME',
       turnNumber: 1,
       diceRollResult: null,
+      diceRolling: false,
       gameLog: ['Игра началась! Начало летописи монастырей.'],
       letopisDeck: deck,
       discardDeck: [],
       activeEventCard: null,
       hasBuiltThisTurn: false,
+      recruitRolledThisTurn: false,
+      pendingTokenPlacement: null,
+      pendingCard: null,
+      showTradeDialog: false,
+      showFortressDialog: false,
+      showDestructionDialog: false,
     });
 
     // Give 1 Molva on income phase start
@@ -421,6 +438,10 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
     set({
       letopisDeck: deck,
       activeEventCard: card,
+      // Сбрасываем прошлый бросок: иначе результат кубика от другого действия
+      // (переправа, Князь, постриг) «решит» новую карту опасности.
+      diceRollResult: null,
+      diceRolling: false,
     });
 
     // Log the event — roll/bribe/helper choice handled in EventModal
@@ -499,10 +520,15 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
       });
     } else {
       // No helper used -> Monk dies!
+      // «Карточка „Житие“ может быть получена, только если персонаж гибнет
+      // от рук кочевников или язычников» (rules.md:89).
+      const threat = activeEventCard.actionType === 'monk_death_check' ? activeEventCard.actionPayload.threat : null;
+      const grantsZhitie = threat === 'nomads' || threat === 'pagans';
+
       set((state) => {
         const active = state.players[activePlayerId];
         const newMonksCount = Math.max(0, active.monksCount - 1);
-        const slot = findFirstEmptyRelicSlot(active.relics);
+        const slot = grantsZhitie ? findFirstEmptyRelicSlot(active.relics) : null;
         const newRelics = slot ? { ...active.relics, [slot]: 'zhitie' as RelicType } : active.relics;
 
         const updatedBoard = state.board.map((row) =>
@@ -527,7 +553,9 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
           board: updatedBoard,
           gameLog: [
             ...state.gameLog,
-            `💀 Монах погиб мученической смертью! Фишка вернулась к воротам монастыря. На месте гибели возведена Часовня. Получено 1 Житие (+1 ПО).`,
+            grantsZhitie
+              ? `💀 Монах погиб мученической смертью! Фишка вернулась к воротам монастыря. На месте гибели возведена Часовня. Получено 1 Житие (+1 ПО).`
+              : `💀 Монах погиб от рук разбойников! Фишка вернулась к воротам монастыря. На месте гибели возведена Часовня. Житие не получено: оно даётся только за гибель от кочевников и язычников.`,
           ],
           activeEventCard: null,
           discardDeck: [...state.discardDeck, activeEventCard],
@@ -613,6 +641,19 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
       const { type } = activeEventCard.actionPayload;
       const isPrivate = type === 'village' || type === 'saltworks';
 
+      // «…имеет право поместить жетон „Река“ по своему усмотрению на любую свободную
+      // клетку поля» (rules.md:46). Поэтому жетон реки не ставим сразу, а переводим
+      // доску в режим выбора клетки. Если свободных клеток нет — ставим на текущую.
+      if (type === 'river' && state.board.flat().some((c) => c.type === 'empty')) {
+        set((st) => ({
+          pendingTokenPlacement: 'river',
+          pendingCard: activeEventCard,
+          activeEventCard: null,
+          gameLog: [...st.gameLog, `${p.name} выкладывает жетон «Река». Выберите свободную клетку на поле.`],
+        }));
+        return;
+      }
+
       const active = state.players[activePlayerId];
       const newResources = { ...active.resources };
       let resourceLog = '';
@@ -632,10 +673,10 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
 
       // Windfall: retreat and immediately end turn (skip BUILD)
       if (type === 'windfall') {
-        const prevCell = active.prevCell;
+        const retreatTo = active.prevCell;
         const boardWithRetreat = state.board.map((row) =>
           row.map((c) => {
-            if (prevCell && c.x === prevCell.x && c.y === prevCell.y) {
+            if (retreatTo && c.x === retreatTo.x && c.y === retreatTo.y) {
               return { ...c, occupantId: activePlayerId };
             }
             if (c.x === curX && c.y === curY) {
@@ -649,9 +690,23 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
           board: boardWithRetreat,
           players: {
             ...st.players,
-            [activePlayerId]: { ...active, resources: newResources, hasEntered: false, prevCell: null },
+            [activePlayerId]: {
+              ...active,
+              resources: newResources,
+              // Фишка реально отступает на клетку, с которой пришла, поэтому
+              // hasEntered остаётся true — иначе фишка рисуется и на доске, и у врат,
+              // а движок считает текущей чужую клетку.
+              hasEntered: !!retreatTo,
+              riverBlocked: false,
+              prevCell: null,
+            },
           },
-          gameLog: [...st.gameLog, `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}) и отступил назад.${resourceLog}`],
+          gameLog: [
+            ...st.gameLog,
+            `${p.name} разместил жетон «${tokenName}» на клетке (${curX}, ${curY}) и отступил ${
+              retreatTo ? `на клетку (${retreatTo.x}, ${retreatTo.y})` : 'к воротам обители'
+            }.${resourceLog}`,
+          ],
           activeEventCard: null,
           discardDeck: [...st.discardDeck, activeEventCard],
         }));
@@ -800,6 +855,42 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
     }));
   },
 
+  placePendingToken: (x, y) => {
+    const { board, activePlayerId, pendingTokenPlacement, pendingCard } = get();
+    if (!pendingTokenPlacement) return;
+
+    const target = board[y]?.[x];
+    if (!target || target.type !== 'empty') {
+      set((state) => ({
+        gameLog: [...state.gameLog, 'Жетон можно выставить только на свободную клетку поля.'],
+      }));
+      return;
+    }
+
+    const tokenName =
+      pendingTokenPlacement === 'river' ? 'Река' :
+      pendingTokenPlacement === 'village' ? 'Село' :
+      pendingTokenPlacement === 'saltworks' ? 'Солеварня' :
+      pendingTokenPlacement === 'fortress' ? 'Крепость' :
+      'Бурелом';
+
+    const updatedBoard = board.map((row) =>
+      row.map((c) => (c.x === x && c.y === y ? { ...c, type: pendingTokenPlacement, ownerId: null } : c))
+    );
+
+    set((state) => ({
+      board: updatedBoard,
+      pendingTokenPlacement: null,
+      pendingCard: null,
+      discardDeck: pendingCard ? [...state.discardDeck, pendingCard] : state.discardDeck,
+      gameLog: [
+        ...state.gameLog,
+        `${state.players[activePlayerId]?.name ?? 'Игрок'} разместил жетон «${tokenName}» на клетке (${x}, ${y}).`,
+      ],
+      phase: 'BUILD',
+    }));
+  },
+
   buildStructure: (structure) => {
     const { activePlayerId, players } = get();
     const p = players[activePlayerId];
@@ -811,22 +902,21 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
       return;
     }
 
-    // Strict sequential building check
-    const currentIdx = BUILDING_SEQ.indexOf(structure);
-
-    if (currentIdx > 0) {
-      const prevStructure = BUILDING_SEQ[currentIdx - 1];
-      if (!p.buildings[prevStructure]) {
-        set((state) => ({
-          gameLog: [...state.gameLog, `Вы не можете строить ${structure}, пока не построена предыдущая постройка (${prevStructure})!`],
-        }));
-        return;
-      }
-    }
-
     if (p.buildings[structure]) {
       set((state) => ({
         gameLog: [...state.gameLog, `Данная постройка уже возведена в вашем монастыре!`],
+      }));
+      return;
+    }
+
+    // Строгая очерёдность (rules.md:16): строить можно только следующее звено цепочки.
+    // Проверка идёт от фактического состояния, поэтому после пожара цепочка
+    // начинается заново с Келий, а не с «предыдущего» звена.
+    const nextStructure = getNextBuilding(p);
+    if (nextStructure !== structure) {
+      const required = nextStructure ? BUILDING_NAMES_ACC[nextStructure] : 'все здания уже построены';
+      set((state) => ({
+        gameLog: [...state.gameLog, `Строить можно только по порядку. Сейчас доступно: ${required}.`],
       }));
       return;
     }
@@ -875,6 +965,8 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
   },
 
   visitCityLocation: (location) => {
+    // Пока идёт анимация броска, повторный клик списал бы ресурсы без броска.
+    if (get().diceRolling) return;
     const { activePlayerId } = get();
     const p = get().players[activePlayerId];
     const res = p.resources;
@@ -994,9 +1086,20 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
   },
 
   recruitMonkAttempt: () => {
+    // Пока идёт анимация броска, повторный клик списал бы ресурсы без броска.
+    if (get().diceRolling) return;
+
     const { activePlayerId } = get();
     const p = get().players[activePlayerId];
     const res = p.resources;
+
+    // «За один ход есть только одна попытка броска кубика» (rules.md:70).
+    if (get().recruitRolledThisTurn) {
+      set((state) => ({
+        gameLog: [...state.gameLog, `В этот ход уже была попытка пострига: даётся только один бросок кубика за ход.`],
+      }));
+      return;
+    }
 
     const curCell = findPlayerCell(get().board, activePlayerId);
     // At the start platform: either on own start cell, or not yet entered (piece on platform)
@@ -1041,6 +1144,7 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
           },
         },
         gameLog: [...state.gameLog, `${active.name} совершает обряд пострига. Бросаем кубик...`],
+        recruitRolledThisTurn: true,
       };
     });
 
@@ -1207,6 +1311,7 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
   },
 
   performCellResourceAction: (cellType) => {
+    if (get().diceRolling) return;
     const { activePlayerId, board } = get();
     const cell = findPlayerCell(board, activePlayerId);
     if (!cell) return;
@@ -1255,7 +1360,7 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
   },
 
   endTurn: () => {
-    const { playerOrder, activePlayerId, turnNumber } = get();
+    const { playerOrder, activePlayerId, turnNumber, pendingCard, discardDeck } = get();
     const curIdx = playerOrder.indexOf(activePlayerId);
     const nextIdx = (curIdx + 1) % playerOrder.length;
     const nextPlayerId = playerOrder[nextIdx];
@@ -1268,7 +1373,13 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
       turnNumber: nextTurn,
       phase: 'INCOME',
       diceRollResult: null,
+      diceRolling: false,
       hasBuiltThisTurn: false,
+      recruitRolledThisTurn: false,
+      pendingTokenPlacement: null,
+      pendingCard: null,
+      // Если игрок завершил ход, не выставив жетон, карта всё равно уходит в сброс.
+      discardDeck: pendingCard ? [...discardDeck, pendingCard] : discardDeck,
     });
 
     // Income phase trigger for next player

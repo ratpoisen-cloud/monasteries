@@ -40,6 +40,9 @@ function App() {
     destroyBuilding,
     skipEntryMove,
     endTurn,
+    recruitRolledThisTurn,
+    pendingTokenPlacement,
+    placePendingToken,
   } = useGameStore();
 
   const [playerCount, setPlayerCount] = useState<number>(2);
@@ -113,7 +116,7 @@ function App() {
         className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-cover bg-center transition-all duration-1000 select-none"
         style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.9)), url(${import.meta.env.BASE_URL}edited-image.jpg)` }}
       >
-        <div className="parchment-codex max-w-md w-full p-10 sm:p-12 flex flex-col gap-6 shadow-2xl relative items-center justify-center border-4 double border-amber-900/80 rounded-3xl animate-scale-in">
+        <div className="parchment-codex max-w-md w-full p-10 sm:p-12 flex flex-col gap-6 shadow-2xl relative items-center justify-center border-4 border-double border-amber-900/80 rounded-3xl animate-scale-in">
           <div className="absolute top-3 left-3 right-3 bottom-3 border border-amber-900/20 pointer-events-none rounded-2xl" />
           
           {/* Illuminated Loading Graphic */}
@@ -214,7 +217,7 @@ function App() {
     const winner = getWinnerInfo();
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-black/40">
-        <div className="parchment-bg max-w-lg w-full rounded-3xl p-10 flex flex-col gap-6 shadow-2xl relative animate-scale-in items-center">
+        <div className="parchment-codex max-h-[90dvh] overflow-y-auto max-w-lg w-full rounded-3xl p-10 flex flex-col gap-6 shadow-2xl relative animate-scale-in items-center">
           <Award className="w-16 h-16 text-amber-500 border-2 border-amber-600/30 p-2 rounded-full animate-bounce" />
           
           <h1 className="text-4xl text-amber-950 text-oldrus font-bold">
@@ -278,8 +281,8 @@ function App() {
       />
 
       {showFortressDialog && activePlayer && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="parchment-bg max-w-sm w-full rounded-3xl p-8 relative flex flex-col items-center gap-6 animate-scale-in text-center">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center overflow-y-auto p-4">
+          <div className="parchment-codex max-h-[90dvh] overflow-y-auto max-w-sm w-full rounded-3xl p-8 relative flex flex-col items-center gap-6 animate-scale-in text-center">
             <h2 className="text-3xl text-oldrus text-amber-950 font-bold">Крепость</h2>
             <p className="text-sm text-amber-950 font-semibold">
               В крепости можно нанять Дружинника за 2 ед. Хлеба. Дружинник защитит монаха от опасностей.
@@ -298,7 +301,7 @@ function App() {
               </button>
               <button
                 onClick={skipFortressAction}
-                className="flex-1 py-3 bg-stone-700 text-stone-300 border border-stone-600 hover:bg-stone-650 rounded-xl font-semibold transition-all cursor-pointer"
+                className="flex-1 py-3 bg-stone-700 text-stone-300 border border-stone-600 hover:bg-stone-600 rounded-xl font-semibold transition-all cursor-pointer"
               >
                 Уйти
               </button>
@@ -308,8 +311,8 @@ function App() {
       )}
 
       {showDestructionDialog && activePlayer && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="parchment-bg max-w-sm w-full rounded-3xl p-8 relative flex flex-col items-center gap-5 animate-scale-in text-center">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center overflow-y-auto p-4">
+          <div className="parchment-codex max-h-[90dvh] overflow-y-auto max-w-sm w-full rounded-3xl p-8 relative flex flex-col items-center gap-5 animate-scale-in text-center">
             <h2 className="text-3xl text-oldrus text-amber-950 font-bold">Великий пожар</h2>
             <p className="text-sm text-amber-950 font-semibold leading-relaxed">
               Страшный пожар охватил ваш монастырь. Выберите здание, которое сгорит. Если в нём была реликвия — она сгорает безвозвратно.
@@ -363,6 +366,7 @@ function App() {
               onPerformCellAction={performCellResourceAction}
               onSkipCellAction={skipCellResourceAction}
               currentCellType={activePlayerCellType}
+              recruitRolled={recruitRolledThisTurn}
               filterPlayerIds={['player_1', 'player_3']}
             />
           </div>
@@ -377,6 +381,8 @@ function App() {
                 phase={phase}
                 onMove={movePlayer}
                 onSkipEntryMove={skipEntryMove}
+                pendingTokenPlacement={pendingTokenPlacement}
+                onPlaceToken={placePendingToken}
               />
             </div>
           </div>
@@ -395,6 +401,7 @@ function App() {
               onPerformCellAction={performCellResourceAction}
               onSkipCellAction={skipCellResourceAction}
               currentCellType={activePlayerCellType}
+              recruitRolled={recruitRolledThisTurn}
               filterPlayerIds={['player_2', 'player_4']}
             />
           </div>
@@ -407,7 +414,7 @@ function App() {
                 <span className="text-xl">Летопись обители</span>
               </div>
 
-              <div className="flex-1 overflow-y-auto flex flex-col gap-2 pr-2 text-sm text-stone-900 scrollbar-thin">
+              <div className="flex-1 overflow-y-auto flex flex-col gap-2 pr-2 text-sm text-stone-900">
                 {[...gameLog].reverse().map((log, i) => (
                   <div
                     key={i}
@@ -439,6 +446,8 @@ function App() {
               phase={phase}
               onMove={movePlayer}
               onSkipEntryMove={skipEntryMove}
+              pendingTokenPlacement={pendingTokenPlacement}
+              onPlaceToken={placePendingToken}
             />
           </div>
 
@@ -456,6 +465,7 @@ function App() {
               onPerformCellAction={performCellResourceAction}
               onSkipCellAction={skipCellResourceAction}
               currentCellType={activePlayerCellType}
+              recruitRolled={recruitRolledThisTurn}
               filterPlayerIds={['player_1', 'player_3']}
             />
             <MonasteryPanel
@@ -470,6 +480,7 @@ function App() {
               onPerformCellAction={performCellResourceAction}
               onSkipCellAction={skipCellResourceAction}
               currentCellType={activePlayerCellType}
+              recruitRolled={recruitRolledThisTurn}
               filterPlayerIds={['player_2', 'player_4']}
             />
 
@@ -479,7 +490,7 @@ function App() {
                 <Scroll size={18} className="text-amber-900 drop-shadow" />
                 <span className="text-xl">Летопись обители</span>
               </div>
-              <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 pr-1 text-xs text-stone-900 scrollbar-thin">
+              <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 pr-1 text-xs text-stone-900">
                 {[...gameLog].reverse().map((log, i) => (
                   <div key={i} className="py-1 border-b border-amber-900/20 leading-snug font-semibold">
                     {log}
