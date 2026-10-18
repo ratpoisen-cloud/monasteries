@@ -3,7 +3,7 @@ import type { Player } from '../types/game';
 import { ShoppingCart, RefreshCw, X } from 'lucide-react';
 
 interface TradeModalProps {
-  player: Player;
+  player?: Player;
   isOpen: boolean;
   onClose: () => void;
   onTrade: (ops: {
@@ -31,7 +31,17 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   const [saltToBread, setSaltToBread] = useState<number>(0);
   const [saltToWax, setSaltToWax] = useState<number>(0);
 
-  if (!isOpen) return null;
+  // Escape закрывает ярмарку так же, как крестик.
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !player) return null;
 
   // Calculate resource balance
   const silverFromSales = sellSalt + Math.floor(sellBread / 3) + Math.floor(sellWax / 2);
@@ -58,15 +68,21 @@ export const TradeModal: React.FC<TradeModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center overflow-y-auto p-4">
-      <div className="parchment-codex max-h-[90dvh] overflow-y-auto max-w-md w-full rounded-2xl p-6 relative flex flex-col gap-4 animate-scale-in">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="trade-title"
+        className="parchment-codex max-h-[90dvh] overflow-y-auto max-w-md w-full rounded-2xl p-6 relative flex flex-col gap-4 animate-scale-in"
+      >
         <button
           onClick={onClose}
+          aria-label="Закрыть ярмарку"
           className="absolute top-4 right-4 text-amber-900 hover:text-amber-950 transition-colors"
         >
           <X size={24} />
         </button>
 
-        <h2 className="text-3xl text-oldrus text-amber-950 border-b border-amber-900/20 pb-2 flex items-center gap-2">
+        <h2 id="trade-title" className="text-3xl text-oldrus text-amber-950 border-b border-amber-900/20 pb-2 flex items-center gap-2">
           <ShoppingCart />
           <span>Ярмарочный обмен</span>
         </h2>
@@ -151,7 +167,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
             <span>Обменять Соль на Хлеб (1 Соль = 3 Хлеба)</span>
             <span className="text-emerald-800 font-mono">+{saltToBread * 3} Хлеба</span>
           </label>
-          <input type="range" min="0" max={player.resources.salt - sellSalt - saltToWax} value={saltToBread}
+          <input type="range" min="0" max={Math.max(0, player.resources.salt - sellSalt - saltToWax)} value={saltToBread}
             onChange={(e) => setSaltToBread(parseInt(e.target.value))} className="w-full accent-red-800" />
         </div>
 
@@ -161,7 +177,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
             <span>Обменять Соль на Воск (1 Соль = 2 Воска)</span>
             <span className="text-emerald-800 font-mono">+{saltToWax * 2} Воска</span>
           </label>
-          <input type="range" min="0" max={player.resources.salt - sellSalt - saltToBread} value={saltToWax}
+          <input type="range" min="0" max={Math.max(0, player.resources.salt - sellSalt - saltToBread)} value={saltToWax}
             onChange={(e) => setSaltToWax(parseInt(e.target.value))} className="w-full accent-red-800" />
         </div>
 

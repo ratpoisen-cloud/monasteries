@@ -43,6 +43,7 @@ function App() {
     recruitRolledThisTurn,
     pendingTokenPlacement,
     placePendingToken,
+    letopisDeck,
   } = useGameStore();
 
   const [playerCount, setPlayerCount] = useState<number>(2);
@@ -253,6 +254,9 @@ function App() {
     );
   }
 
+  // Без активного игрока игровая сцена не имеет смысла (и упала бы на props.player).
+  if (!activePlayer) return null;
+
   // --- MAIN GAMEPLAY VIEW ---
   return (
     <div className="min-h-screen gameplay-bg flex flex-col items-center p-4 md:p-6 pb-12"
@@ -274,6 +278,7 @@ function App() {
       />
 
       <TradeModal
+        key={showTradeDialog ? 'fair-open' : 'fair-closed'}
         player={activePlayer}
         isOpen={showTradeDialog}
         onClose={() => useGameStore.setState({ showTradeDialog: false })}
@@ -412,10 +417,16 @@ function App() {
               <div className="flex items-center gap-3 border-b-2 border-amber-900/30 pb-3 mb-3 text-amber-950 font-bold text-oldrus">
                 <Scroll size={20} className="text-amber-900 drop-shadow" />
                 <span className="text-xl">Летопись обители</span>
+                <span
+                  className="ml-auto text-[11px] font-sans font-bold bg-amber-950/15 border border-amber-900/30 rounded-full px-2 py-0.5 whitespace-nowrap"
+                  title="Сколько карт «Летописи» осталось в колоде (всего 74)"
+                >
+                  Колода: {letopisDeck.length}
+                </span>
               </div>
 
               <div className="flex-1 overflow-y-auto flex flex-col gap-2 pr-2 text-sm text-stone-900">
-                {[...gameLog].reverse().map((log, i) => (
+                {[...gameLog].slice(-100).reverse().map((log, i) => (
                   <div
                     key={i}
                     className={`py-1.5 border-b border-amber-900/20 leading-relaxed text-sm ${
@@ -489,9 +500,12 @@ function App() {
               <div className="flex items-center gap-2 border-b border-amber-900/30 pb-2 mb-2 text-amber-950 font-bold text-oldrus">
                 <Scroll size={18} className="text-amber-900 drop-shadow" />
                 <span className="text-xl">Летопись обители</span>
+                <span className="ml-auto text-[10px] font-sans font-bold bg-amber-950/15 border border-amber-900/30 rounded-full px-2 py-0.5 whitespace-nowrap">
+                  Колода: {letopisDeck.length}
+                </span>
               </div>
               <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 pr-1 text-xs text-stone-900">
-                {[...gameLog].reverse().map((log, i) => (
+                {[...gameLog].slice(-100).reverse().map((log, i) => (
                   <div key={i} className="py-1 border-b border-amber-900/20 leading-snug font-semibold">
                     {log}
                   </div>

@@ -49,7 +49,10 @@ export const Dice: React.FC<DiceProps> = ({ result, rolling }) => {
         )}
       </div>
       {!rolling && result !== null && (
-        <span className="text-sm font-semibold text-amber-600 bg-amber-950/40 px-3 py-1 rounded-full border border-amber-900/50">
+        <span
+          aria-live="polite"
+          className="text-sm font-semibold text-amber-600 bg-amber-950/40 px-3 py-1 rounded-full border border-amber-900/50"
+        >
           Выпало: {result} ({result % 2 === 0 ? 'Чет' : 'Нечет'})
         </span>
       )}

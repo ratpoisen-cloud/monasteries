@@ -6,7 +6,7 @@ import { asset } from '../utils/paths';
 
 interface EventModalProps {
   card: LetopisCard | null;
-  player: Player;
+  player?: Player;
   diceRollResult: number | null;
   diceRolling: boolean;
   onBribe: (method: 'silver' | 'bread' | 'wax') => void;
@@ -25,7 +25,17 @@ export const EventModal: React.FC<EventModalProps> = ({
   onRollDice,
   onResolve,
 }) => {
-  if (!card) return null;
+  // Блокируем прокрутку фона, пока открыта карта «Летописи».
+  React.useEffect(() => {
+    if (!card) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [card]);
+
+  if (!card || !player) return null;
 
   const hasHelpers = player.helpers.warrior || player.helpers.bear;
   const isDeathCheck = card.actionType === 'monk_death_check';
@@ -120,7 +130,12 @@ export const EventModal: React.FC<EventModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center overflow-y-auto p-4 select-none">
-      <div className="parchment-codex max-h-[90dvh] overflow-y-auto max-w-lg w-full p-8 sm:p-10 flex flex-col gap-5 shadow-2xl relative items-center justify-center border-4 border-double border-amber-900/80 rounded-3xl animate-scale-in text-center">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="event-card-title"
+        className="parchment-codex max-h-[90dvh] overflow-y-auto max-w-lg w-full p-8 sm:p-10 flex flex-col gap-5 shadow-2xl relative items-center justify-center border-4 border-double border-amber-900/80 rounded-3xl animate-scale-in text-center"
+      >
         <div className="absolute top-3 left-3 right-3 bottom-3 border border-amber-900/20 pointer-events-none rounded-2xl" />
 
         {/* Illuminated Relic Graphic */}
@@ -128,7 +143,7 @@ export const EventModal: React.FC<EventModalProps> = ({
           <Scroll className="w-8 h-8 text-amber-950" />
         </div>
 
-        <h2 className="text-3xl sm:text-4xl text-oldrus text-amber-950 font-bold tracking-wider drop-shadow-sm">
+        <h2 id="event-card-title" className="text-3xl sm:text-4xl text-oldrus text-amber-950 font-bold tracking-wider drop-shadow-sm">
           {card.title}
         </h2>
 

@@ -157,7 +157,19 @@ const CellComponent: React.FC<CellProps> = ({
   const cellDiv = (
     <div
       onClick={() => isAvailableMove && onMove(cell.x, cell.y)}
-      className={`relative w-full aspect-square border ${borderClass} rounded-2xl flex flex-col items-center justify-center p-1 cursor-pointer select-none transition-all duration-250 ${bgClass} ${
+      onKeyDown={(e) => {
+        if (!isAvailableMove) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onMove(cell.x, cell.y);
+        }
+      }}
+      role={isAvailableMove ? 'button' : undefined}
+      tabIndex={isAvailableMove ? 0 : undefined}
+      aria-label={`${cellName || 'Клетка'} (${cell.x}, ${cell.y})${
+        isAvailableMove ? ' — доступна для хода' : ''
+      }`}
+      className={`relative w-full aspect-square border ${borderClass} rounded-2xl flex flex-col items-center justify-center p-1 cursor-pointer select-none transition-all duration-250 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${bgClass} ${
         isAvailableMove
           ? 'scale-[1.03] z-20 animate-pulse'
           : ''

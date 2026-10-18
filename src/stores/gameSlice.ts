@@ -102,10 +102,12 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
   pendingCard: null,
 
   initGame: (playerCount) => {
+    // В колоде ровно 4 стартовые арки и 4 цвета: иначе игрок получит undefined startCell.
+    const safeCount = Math.min(START_CELLS.length, Math.max(1, Math.trunc(playerCount)));
     const order: string[] = [];
     const initialPlayers: Record<string, Player> = {};
 
-    for (let i = 0; i < playerCount; i++) {
+    for (let i = 0; i < safeCount; i++) {
       const id = `player_${i + 1}`;
       order.push(id);
       initialPlayers[id] = {
@@ -260,7 +262,8 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
       if (!isValidEntry) return;
     }
 
-    const targetCell = board[y][x];
+    const targetCell = board[y]?.[x];
+    if (!targetCell) return;
 
     // Cannot step on cell occupied by another player
     if (targetCell.occupantId && targetCell.occupantId !== activePlayerId) {
@@ -1360,6 +1363,10 @@ export const createGameSlice: StateCreator<GameStore, [], [], GameSlice> = (set,
   },
 
   endTurn: () => {
+    // Пока крутится кубик, его колбэк записался бы уже в ход следующего игрока.
+    if (get().diceRolling) return;
+    if (get().phase === 'GAME_OVER') return;
+
     const { playerOrder, activePlayerId, turnNumber, pendingCard, discardDeck } = get();
     const curIdx = playerOrder.indexOf(activePlayerId);
     const nextIdx = (curIdx + 1) % playerOrder.length;
